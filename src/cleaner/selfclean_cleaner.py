@@ -22,9 +22,9 @@ from src.utils.plotting import plot_inspection_result
 
 class SelfCleanCleaner(
     BaseCleaner,
-    IntraExtraDistanceLabelErrorMixin,
-    EmbeddingDistanceMixin,
     LADIrrelevantMixin,
+    EmbeddingDistanceMixin,
+    IntraExtraDistanceLabelErrorMixin,
     AutoCleaningMixin,
 ):
     def __init__(
@@ -38,9 +38,11 @@ class SelfCleanCleaner(
         memmap: bool = True,
         memmap_path: Union[Path, str, None] = None,
         # plotting
+        plot_distribution: bool = False,
         plot_top_N: Optional[int] = None,
         output_path: Optional[str] = None,
         figsize: tuple = (10, 8),
+        **kwargs,
     ):
         self.memmap = memmap
         self.chunk_size = chunk_size
@@ -61,8 +63,10 @@ class SelfCleanCleaner(
             f"{distance_function_path}{self.distance_function_name}"
         )
 
+        self.plot_distribution = plot_distribution
         self.plot_top_N = plot_top_N
         self.figsize = figsize
+        super().__init__(**kwargs)
 
     def fit(
         self,

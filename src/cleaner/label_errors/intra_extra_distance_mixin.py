@@ -45,7 +45,7 @@ class IntraExtraDistanceLabelErrorMixin(BaseLabelErrorMixin):
         if self.labels is None:
             warnings.warn("Can't find label errors without having access to labels.")
             return None
-        if len(self.labels.unique()) == 1:
+        if len(np.unique(self.labels)) == 1:
             warnings.warn("Can't detect label errors with only one label.")
             return None
 
