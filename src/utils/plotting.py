@@ -1,0 +1,165 @@
+from typing import Optional
+
+import matplotlib.pyplot as plt
+import numpy as np
+from ssl_library.src.utils.logging import create_subtitle, denormalize_image
+from torchvision import transforms
+
+
+def plot_inspection_result(
+    pred_dups_indices: np.ndarray,
+    pred_oods_indices: np.ndarray,
+    images: np.ndarray,
+    skip_lbl_errs: bool,
+    plot_top_N: int,
+    pred_lbl_errs_indices: Optional[np.ndarray] = None,
+    labels: Optional[np.ndarray] = None,
+    class_labels: Optional[list] = None,
+    output_path: Optional[str] = None,
+    figsize: tuple = (10, 8),
+):
+    rows = 4 if not skip_lbl_errs else 3
+    fig, ax = plt.subplots(rows, plot_top_N, figsize=figsize)
+    for i, (idx1, idx2) in enumerate(pred_dups_indices[:plot_top_N]):
+        ax[0, i].imshow(transforms.ToPILImage()(denormalize_image(images[int(idx1)])))
+        ax[1, i].imshow(transforms.ToPILImage()(denormalize_image(images[int(idx2)])))
+        ax[0, i].set_xticks([])
+        ax[0, i].set_yticks([])
+        ax[1, i].set_xticks([])
+        ax[1, i].set_yticks([])
+        ax[0, i].set_title(f"Ranking: {i+1}, Idx: {int(idx1)}", fontsize=6)
+        ax[1, i].set_title(f"Idx: {int(idx2)}", fontsize=6)
+
+    for i, idx in enumerate(pred_oods_indices[:plot_top_N]):
+        ax[2, i].imshow(transforms.ToPILImage()(denormalize_image(images[int(idx)])))
+        ax[2, i].set_title(f"Ranking: {i+1}, Idx: {int(idx)}", fontsize=6)
+        ax[2, i].set_xticks([])
+        ax[2, i].set_yticks([])
+
+    if not skip_lbl_errs:
+        for i, idx in enumerate(pred_lbl_errs_indices[:plot_top_N]):
+            class_label = get_label_from_index(
+                index=idx, labels=labels, class_labels=class_labels
+            )
+            ax[3, i].imshow(
+                transforms.ToPILImage()(denormalize_image(images[int(idx)]))
+            )
+            ax[3, i].set_title(
+                f"Ranking: {i+1}\nIdx: {int(idx)}\nLbl: {class_label}",
+                fontsize=6,
+            )
+            ax[3, i].set_xticks([])
+            ax[3, i].set_yticks([])
+
+    grid = plt.GridSpec(rows, plot_top_N)
+    create_subtitle(fig, grid[0, ::], "Near-Duplicate Ranking", fontsize=12)
+    create_subtitle(fig, grid[2, ::], "Irrelevant Samples Ranking", fontsize=12)
+    if not skip_lbl_errs:
+        create_subtitle(fig, grid[3, ::], "Label Error Ranking", fontsize=12)
+    fig.tight_layout()
+    if output_path is not None:
+        plt.savefig(output_path, bbox_inches="tight")
+    plt.show()
+
+
+def get_label_from_index(
+    index: int,
+    labels: Optional[np.ndarray] = None,
+    class_labels: Optional[list] = None,
+):
+    index = int(index)
+    if class_labels is not None and labels is not None:
+        return class_labels[labels[index]]
+    elif labels is not None:
+        return labels[index]
+    else:
+        return index
+
+
+def plot_frac_cut(dist, logit_scores, bins, q1, q2, cutoff, loc, scale, path):
+    with plt.style.context(["science", "std-colors", "grid"]):
+        dist_name = dist.__class__.__name__.split("_")[0]
+        fig, ax = plt.subplots(1, 1, figsize=(4, 3))
+        subplot_frac_cut(
+            ax,
+            logit_scores,
+            bins,
+            q1,
+            q2,
+            cutoff,
+            dist,
+            loc,
+            scale,
+        )
+        ax.legend()
+
+        plt.title(dist_name)
+        if path is not None:
+            plt.savefig(path, bbox_inches="tight")
+        plt.show()
+        plt.close(fig)
+        plt.figure().clear()
+        plt.close("all")
+        plt.close()
+        plt.cla()
+        plt.clf()
+
+
+def subplot_frac_cut(ax, logit_scores, bins, q1, q2, cutoff, dist, loc, scale):
+    ax.axvline(
+        x=q1,
+        color="green",
+        linestyle=":",
+        linewidth=1.4,
+        label="left-tail range",
+    )
+    ax.axvline(
+        x=q2,
+        color="green",
+        linestyle=":",
+        linewidth=1.4,
+    )
+    ax.axvspan(q1, q2, alpha=0.5, color="green")
+    ax.hist(
+        logit_scores,
+        bins=bins,
+        histtype="step",
+        density=True,
+        log=True,
+        label="scores",
+        linewidth=1.4,
+    )
+    x_grid = np.linspace(cutoff, q2, 101)
+    y_grid = dist.pdf((x_grid - loc) / scale) / scale
+    ax.plot(x_grid, y_grid, label="distribution fit", color="orange")
+    ax.axvline(
+        x=cutoff,
+        color="orange",
+        label="outlier cutoff",
+        linestyle="--",
+        linewidth=1.4,
+    )
+    ax.set_ylabel("Probability Density", fontsize=18)
+    ax.set_xlabel(r"$\tilde{s}$", fontsize=18)
+
+
+def plot_sensitivity(result, ylabel: str, xlabel: str):
+    with plt.style.context(["science", "std-colors", "grid"]):
+        fig, ax = plt.subplots(1, 1, figsize=(4, 3))
+        subplot_sensitivity(ax, result, ylabel, xlabel)
+        plt.show()
+        plt.close(fig)
+        plt.figure().clear()
+        plt.close("all")
+        plt.close()
+        plt.cla()
+        plt.clf()
+
+
+def subplot_sensitivity(ax, result, ylabel: str, xlabel: str):
+    ax.plot(result[:, 0], result[:, 1], marker="o")
+    ax.plot(result[:, 0], result[:, 0])
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_ylabel(ylabel, fontsize=18)
+    ax.set_xlabel(xlabel, fontsize=18)
