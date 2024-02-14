@@ -10,7 +10,6 @@ from src.utils.plotting import (
     subplot_frac_cut,
     subplot_sensitivity,
 )
-from src.utils.utils_proba import get_scale_loc
 
 
 class AutoCleaningMixin:
@@ -106,7 +105,9 @@ class AutoCleaningMixin:
         q2 = np.quantile(logit_scores, (0.5 * p) ** 0.5)
 
         # calculate the cut-off
-        scale, loc = get_scale_loc(dist, logit_scores, p, (0.5 * p) ** 0.5)
+        scale, loc = AutoCleaningMixin.get_scale_loc(
+            dist, logit_scores, p, (0.5 * p) ** 0.5
+        )
         cutoff = dist.ppf(prob) * scale + loc
 
         # Exclude the scores below probability threshold
@@ -207,3 +208,13 @@ class AutoCleaningMixin:
                 xlabel=r"Contamination rate guess $\alpha$",
             )
         return result
+
+    @staticmethod
+    def get_scale_loc(dist, x, q1, q2):
+        x1 = np.quantile(x, q1)
+        x2 = np.quantile(x, q2)
+        y1 = dist.ppf(q1)
+        y2 = dist.ppf(q2)
+        scale = (x1 - x2) / (y1 - y2)
+        loc = (y1 * x2 - y2 * x1) / (y1 - y2)
+        return scale, loc

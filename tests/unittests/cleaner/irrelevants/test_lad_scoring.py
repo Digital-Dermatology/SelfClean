@@ -6,7 +6,6 @@ from src.cleaner.selfclean_cleaner import SelfCleanCleaner
 
 
 class TestIrrelevantsLADScoring(unittest.TestCase):
-
     def test_far_outlier(self):
         emb_space = np.zeros(shape=(50, 198))
         emb_space[-1] = np.ones_like(emb_space[0])

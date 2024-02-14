@@ -6,7 +6,6 @@ from src.cleaner.selfclean_cleaner import SelfCleanCleaner
 
 
 class TestLabelErrorIntraExtraDistance(unittest.TestCase):
-
     def test_raises_wo_label(self):
         emb_space = np.zeros(shape=(50, 198))
 
