@@ -1,10 +1,11 @@
-from typing import List, Tuple
+import warnings
+from typing import List, Optional, Tuple
 
 import numpy as np
-from ssl_library.src.utils.logging import plot_dist
 
 from src.cleaner.label_errors.base_label_error_mixin import BaseLabelErrorMixin
 from src.utils.utils import has_same_label
+from ssl_library.src.utils.logging import plot_dist
 
 
 class IntraExtraDistanceLabelErrorMixin(BaseLabelErrorMixin):
@@ -40,11 +41,12 @@ class IntraExtraDistanceLabelErrorMixin(BaseLabelErrorMixin):
         lbl_scores = (min_diff**2) / (min_same**2 + min_diff**2)
         return lbl_scores
 
-    def get_label_error_ranking(self) -> List[Tuple[float, int]]:
+    def get_label_error_ranking(self) -> Optional[List[Tuple[float, int]]]:
         if self.labels is None:
-            raise ValueError("Can't find label errors without having access to labels.")
+            warnings.warn("Can't find label errors without having access to labels.")
+            return None
         if len(self.labels.unique()) == 1:
-            print("Can't detect label errors with only one label.")
+            warnings.warn("Can't detect label errors with only one label.")
             return None
 
         label_error_scores = self.labels_calc_scores()

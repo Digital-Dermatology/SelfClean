@@ -1,24 +1,25 @@
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from ssl_library.src.utils.logging import create_subtitle, denormalize_image
 from torchvision import transforms
+
+from ssl_library.src.utils.logging import create_subtitle, denormalize_image
 
 
 def plot_inspection_result(
     pred_dups_indices: np.ndarray,
     pred_oods_indices: np.ndarray,
     images: np.ndarray,
-    skip_lbl_errs: bool,
     plot_top_N: int,
     pred_lbl_errs_indices: Optional[np.ndarray] = None,
     labels: Optional[np.ndarray] = None,
     class_labels: Optional[list] = None,
-    output_path: Optional[str] = None,
+    output_path: Optional[Union[str, Path]] = None,
     figsize: tuple = (10, 8),
 ):
-    rows = 4 if not skip_lbl_errs else 3
+    rows = 4 if pred_lbl_errs_indices is not None else 3
     fig, ax = plt.subplots(rows, plot_top_N, figsize=figsize)
     for i, (idx1, idx2) in enumerate(pred_dups_indices[:plot_top_N]):
         ax[0, i].imshow(transforms.ToPILImage()(denormalize_image(images[int(idx1)])))
@@ -36,7 +37,7 @@ def plot_inspection_result(
         ax[2, i].set_xticks([])
         ax[2, i].set_yticks([])
 
-    if not skip_lbl_errs:
+    if pred_lbl_errs_indices is not None:
         for i, idx in enumerate(pred_lbl_errs_indices[:plot_top_N]):
             class_label = get_label_from_index(
                 index=idx, labels=labels, class_labels=class_labels
@@ -54,7 +55,7 @@ def plot_inspection_result(
     grid = plt.GridSpec(rows, plot_top_N)
     create_subtitle(fig, grid[0, ::], "Near-Duplicate Ranking", fontsize=12)
     create_subtitle(fig, grid[2, ::], "Irrelevant Samples Ranking", fontsize=12)
-    if not skip_lbl_errs:
+    if pred_lbl_errs_indices is not None:
         create_subtitle(fig, grid[3, ::], "Label Error Ranking", fontsize=12)
     fig.tight_layout()
     if output_path is not None:

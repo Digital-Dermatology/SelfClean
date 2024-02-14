@@ -5,27 +5,19 @@ from typing import Callable, Optional, Union
 
 import numpy as np
 import scienceplots  # noqa: F401
-import scipy
-import scipy.stats
 import sklearn  # noqa: F401
 from tqdm import tqdm
 
 import src.distances  # noqa: F401
 import src.distances.projective_distance  # noqa: F401
+from src.cleaner.auto_cleaning_mixin import AutoCleaningMixin
 from src.cleaner.base_cleaner import BaseCleaner
 from src.cleaner.irrelevants.lad_mixin import LADIrrelevantMixin
 from src.cleaner.label_errors.intra_extra_distance_mixin import (
     IntraExtraDistanceLabelErrorMixin,
 )
 from src.cleaner.near_duplicates.embedding_distance_mixin import EmbeddingDistanceMixin
-from src.utils.utils_proba import get_scale_loc
-from utils.plotting import (
-    plot_frac_cut,
-    plot_inspection_result,
-    plot_sensitivity,
-    subplot_frac_cut,
-    subplot_sensitivity,
-)
+from src.utils.plotting import plot_inspection_result
 
 
 class SelfCleanCleaner(
@@ -33,15 +25,10 @@ class SelfCleanCleaner(
     IntraExtraDistanceLabelErrorMixin,
     EmbeddingDistanceMixin,
     LADIrrelevantMixin,
+    AutoCleaningMixin,
 ):
     def __init__(
         self,
-        # cleaning
-        auto_cleaning: bool = False,
-        near_duplicate_cut_off: float = 0.01,
-        irrelevant_cut_off: float = 0.01,
-        label_error_cut_off: float = 0.01,
-        cleaner_kwargs: dict = {},
         # distance calculation
         distance_function_path: str = "sklearn.metrics.pairwise.",
         distance_function_name: str = "cosine_similarity",
@@ -73,6 +60,9 @@ class SelfCleanCleaner(
         self.distance_function: Callable = eval(
             f"{distance_function_path}{self.distance_function_name}"
         )
+
+        self.plot_top_N = plot_top_N
+        self.figsize = figsize
 
     def fit(
         self,
@@ -150,72 +140,27 @@ class SelfCleanCleaner(
         ]
         return self
 
-    def predict(
-        self,
-        plot_top_N: Optional[int] = None,
-        figsize: tuple = (10, 8),
-        auto_cleaning: bool = False,
-        cleaner_kwargs: dict = {},
-        near_duplicate_cut_off: float = 0.01,
-        irrelevant_cut_off: float = 0.01,
-        label_error_cut_off: float = 0.01,
-    ):
+    def predict(self):
         pred_nd = self.get_near_duplicate_ranking()
         pred_nd_scores = np.asarray([x[0] for x in pred_nd])
         pred_nd_indices = np.asarray([x[1] for x in pred_nd])
+        del pred_nd
 
         pred_oods = self.get_irrelevant_ranking()
         pred_oods_scores = np.asarray([x[0] for x in pred_oods])
         pred_oods_indices = np.asarray([x[1] for x in pred_oods])
+        del pred_oods
 
-        # TODO: make this nicer
         pred_lbl_errs = self.get_label_error_ranking()
-        # check if label errors should be skipped
-        skip_lbl_errs = False
         if pred_lbl_errs is not None:
             pred_lbl_errs_scores = np.asarray([x[0] for x in pred_lbl_errs])
             pred_lbl_errs_indices = np.asarray([x[1] for x in pred_lbl_errs])
         else:
-            skip_lbl_errs = True
-        del pred_oods, pred_lbl_errs
+            pred_lbl_errs_scores = None
+            pred_lbl_errs_indices = None
+        del pred_lbl_errs
 
-        # TODO: create a mixin with the autocleaning functionality
-        if auto_cleaning:
-            # Near Duplicates
-            if self.output_path is not None:
-                cleaner_kwargs[
-                    "path"
-                ] = f"{self.output_path.stem}_auto_dups{self.output_path.suffix}"
-            cleaner_kwargs["alpha"] = near_duplicate_cut_off
-            issues_dup = self.fraction_cut(
-                scores=pred_nd_scores,
-                **cleaner_kwargs,
-            )
-
-            # Irrelevant Samples
-            if self.output_path is not None:
-                cleaner_kwargs[
-                    "path"
-                ] = f"{self.output_path.stem}_auto_oods{self.output_path.suffix}"
-            cleaner_kwargs["alpha"] = irrelevant_cut_off
-            issues_ood = self.fraction_cut(
-                scores=pred_oods_scores,
-                **cleaner_kwargs,
-            )
-
-            # Label Errors
-            if not skip_lbl_errs:
-                if self.output_path is not None:
-                    cleaner_kwargs[
-                        "path"
-                    ] = f"{self.output_path.stem}_auto_lbls{self.output_path.suffix}"
-                cleaner_kwargs["alpha"] = label_error_cut_off
-                issues_lbl = self.fraction_cut(
-                    scores=pred_lbl_errs_scores,
-                    **cleaner_kwargs,
-                )
-
-        if plot_top_N is not None and self.images is not None:
+        if self.plot_top_N is not None and self.images is not None:
             plot_inspection_result(
                 pred_dups_indices=pred_nd_indices,
                 pred_oods_indices=pred_oods_indices,
@@ -223,10 +168,9 @@ class SelfCleanCleaner(
                 images=self.images,
                 labels=self.labels,
                 class_labels=self.class_labels,
-                skip_lbl_errs=skip_lbl_errs,
-                plot_top_N=plot_top_N,
+                plot_top_N=self.plot_top_N,
                 output_path=self.output_path,
-                figsize=figsize,
+                figsize=self.figsize,
             )
 
         return_dict = {
@@ -238,146 +182,17 @@ class SelfCleanCleaner(
                 "indices": pred_nd_indices,
                 "scores": pred_nd_scores,
             },
-        }
-        if not skip_lbl_errs:
-            return_dict["label_errors"] = {
+            "label_errors": {
                 "indices": pred_lbl_errs_indices,
                 "scores": pred_lbl_errs_scores,
-            }
+            },
+        }
 
-        if auto_cleaning:
-            return_dict["near_duplicates"]["auto_issues"] = issues_dup
-            return_dict["irrelevants"]["auto_issues"] = issues_ood
-            if not skip_lbl_errs:
-                return_dict["label_errors"]["auto_issues"] = issues_lbl
+        return_dict = self.perform_auto_cleaning(
+            return_dict=return_dict,
+            pred_near_duplicate_scores=pred_nd_scores,
+            pred_irrelevant_scores=pred_oods_scores,
+            pred_label_error_scores=pred_lbl_errs_scores,
+            output_path=self.output_path,
+        )
         return return_dict
-
-    def fraction_cut(
-        self,
-        scores: np.ndarray,
-        alpha: float = 0.01,
-        q: float = 0.05,
-        dist=scipy.stats.logistic,
-        plot_result: bool = False,
-        ax=None,
-        bins="sqrt",
-        debug: bool = False,
-        path: Optional[str] = None,
-    ):
-        M = len(scores)
-        if M == self.condensed_size:
-            # scale alpha for duplicates
-            alpha = alpha**2
-        # only consider the point in range [0,1]
-        _scores = scores[(scores > 0) & (scores < 1)]
-        # logit transform
-        logit_scores = np.log(_scores / (1 - _scores))
-
-        # calculate the quantiles
-        p = alpha
-        prob = q * p * self.N / M
-        q1 = np.quantile(logit_scores, p)
-        q2 = np.quantile(logit_scores, (0.5 * p) ** 0.5)
-
-        # calculate the cut-off
-        scale, loc = get_scale_loc(dist, logit_scores, p, (0.5 * p) ** 0.5)
-        cutoff = dist.ppf(prob) * scale + loc
-
-        # Exclude the scores below probability threshold
-        exclude = logit_scores < cutoff
-        n = exclude.sum()
-        if debug:
-            print(f"{n} outliers ({n/self.N:.1%})")
-
-        if plot_result:
-            if ax is not None:
-                subplot_frac_cut(
-                    ax,
-                    logit_scores,
-                    bins,
-                    q1,
-                    q2,
-                    cutoff,
-                    dist,
-                    loc,
-                    scale,
-                )
-            else:
-                plot_frac_cut(
-                    dist,
-                    logit_scores,
-                    bins,
-                    q1,
-                    q2,
-                    cutoff,
-                    loc,
-                    scale,
-                    path,
-                )
-
-        return np.where(exclude)[0]
-
-    def threshold_sensitivity(self, scores: np.ndarray, ax=None):
-        thresholds = 2 ** np.linspace(-10, -2, 17)
-        result = np.array(
-            [
-                (
-                    q,
-                    self.fraction_cut(
-                        scores=scores,
-                        alpha=0.1,
-                        q=q,
-                        plot_result=False,
-                        debug=False,
-                    ).shape[0],
-                )
-                for q in thresholds
-            ]
-        )
-        result[:, 1] = result[:, 1] / self.N
-        if ax is not None:
-            subplot_sensitivity(
-                ax,
-                result,
-                ylabel="Fraction of detected outliers",
-                xlabel=r"Significance level $q$",
-            )
-        else:
-            plot_sensitivity(
-                result,
-                ylabel="Fraction of detected outliers",
-                xlabel=r"Significance level $q$",
-            )
-        return result
-
-    def alpha_sensitivity(self, scores: np.ndarray, ax=None):
-        alphas = 2 ** np.linspace(-10, -2, 17)
-        result = np.array(
-            [
-                (
-                    a,
-                    self.fraction_cut(
-                        scores=scores,
-                        alpha=a,
-                        plot_result=False,
-                        debug=False,
-                    ).shape[0],
-                )
-                for a in alphas
-            ]
-        )
-        result[:, 1] = result[:, 1] / self.N
-        if ax is not None:
-            subplot_sensitivity(
-                ax,
-                result,
-                ylabel="Fraction of detected outliers",
-                xlabel=r"Contamination rate guess $\alpha$",
-            )
-        else:
-            plot_sensitivity(
-                result,
-                ylabel="Fraction of detected outliers",
-                xlabel=r"Contamination rate guess $\alpha$",
-            )
-        return result

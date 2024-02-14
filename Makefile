@@ -8,7 +8,7 @@ include *.mk
 ###########################
 # VARIABLES
 ###########################
-PROJECTNAME := SelfClean
+PROJECTNAME := selfclean
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD | tr / _)
 PROJECT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/)
 
@@ -83,19 +83,7 @@ endif
 NUM_THREADS := $(shell expr $(NUM_CORES) / $(NUM_GPUS))
 
 DOCKER_ARGS := -v $$PWD:/workspace/ -v $(LOCAL_DATA_DIR):/data/ -p $(PORT):8888 --rm
-DOCKER_DGX := docker run \
-			  -it \
-              -u $(id -u):$(id -g) \
-			  -v ${PWD}:/workspace/ \
-			  -v /raid/fabian/:/raid/fabian/ \
-			  -w /workspace \
-			  -d \
-			  --gpus='"device=0,1,2,3"' \
-              --name $(PROJECTNAME)_multi_gpu \
-			  --shm-size 200G \
-			  --env-file .env
-DOCKER_CMD := docker run $(DOCKER_ARGS) --env-file=.env $(GPU_ARGS) $(DOCKER_CONTAINER_NAME) -it $(PROJECTNAME):$(GIT_BRANCH)
-TORCH_CMD := OMP_NUM_THREADS=$(NUM_THREADS) torchrun --standalone --nnodes 1 --node_rank 0 --nproc_per_node $(NUM_GPUS)
+DOCKER_CMD := docker run $(DOCKER_ARGS) $(GPU_ARGS) $(DOCKER_CONTAINER_NAME) -it $(PROJECTNAME):$(GIT_BRANCH)
 
 # SSH
 PORT := 22
@@ -180,4 +168,4 @@ start_jupyter: _build  ##@Docker start a jupyter notebook inside the docker imag
 .PHONY: test
 test: _build  ##@Test run all tests in the project
     # Ignore integration tests flag: --ignore=test/manual_integration_tests/
-	$(DOCKER_CMD) /bin/bash -c "wandb offline && python -m pytest --cov-report html:cov_html --cov-report term --cov=src --cov-report xml --junitxml=report.xml ./ && coverage xml"
+	$(DOCKER_CMD) /bin/bash -c "python3 -m coverage run -m pytest tests --junitxml=report.xml; coverage report -i --include=src/*"
