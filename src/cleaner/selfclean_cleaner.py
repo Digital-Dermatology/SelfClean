@@ -144,7 +144,7 @@ class SelfCleanCleaner(
         ]
         return self
 
-    def predict(self):
+    def predict(self) -> dict:
         pred_nd = self.get_near_duplicate_ranking()
         pred_nd_scores = np.asarray([x[0] for x in pred_nd])
         pred_nd_indices = np.asarray([x[1] for x in pred_nd])

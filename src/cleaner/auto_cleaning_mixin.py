@@ -17,16 +17,16 @@ class AutoCleaningMixin:
     def __init__(
         self,
         auto_cleaning: bool = False,
-        near_duplicate_cut_off: float = 0.01,
         irrelevant_cut_off: float = 0.01,
+        near_duplicate_cut_off: float = 0.01,
         label_error_cut_off: float = 0.01,
         cleaner_kwargs: dict = {},
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.auto_cleaning = auto_cleaning
-        self.near_duplicate_cut_off = near_duplicate_cut_off
         self.irrelevant_cut_off = irrelevant_cut_off
+        self.near_duplicate_cut_off = near_duplicate_cut_off
         self.label_error_cut_off = label_error_cut_off
         self.cleaner_kwargs = cleaner_kwargs
 

@@ -17,5 +17,5 @@ class BaseCleaner(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def predict(self):
+    def predict(self) -> dict:
         raise NotImplementedError()
