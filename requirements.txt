@@ -3,12 +3,8 @@ numpy
 matplotlib
 pandas
 scikit_learn
-swifter==1.0.9
-wandb
 wget==3.2
 pytest
-plotly
-mapply
 torchinfo
 torchmetrics
 einops
@@ -19,11 +15,6 @@ isort>=5.10
 pipreqs==0.4.11
 pre-commit>=2.20
 pytest-cov>=3
-transformers
 seaborn
-pyod
-jupyter
-fitter
 SciencePlots
 scikit-image
-torch-lr-finder
