@@ -2,6 +2,7 @@ import unittest
 
 import numpy as np
 
+from src.cleaner.base_cleaner import BaseCleaner
 from src.cleaner.selfclean_cleaner import SelfCleanCleaner
 
 
@@ -13,6 +14,7 @@ class TestSelfCleanCleaner(unittest.TestCase):
     def test_fit(self):
         cleaner = SelfCleanCleaner(memmap=False)
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
+        self.assertIsInstance(cleaner, BaseCleaner)
         self.assertIsNotNone(cleaner.distance_matrix)
         self.assertIsNotNone(cleaner.p_distances)
 
