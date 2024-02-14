@@ -69,7 +69,7 @@ class EmbeddingDistanceMixin(BaseNearDuplicateMixin):
 
         if self.plot_distribution:
             plot_dist(
-                scores=np.asarray([x for x in scores_near_dup]),
+                scores=scores_near_dup,
                 title="Distribution of near-duplicates",
             )
         return list(zip(scores_near_dup, indices_near_dup))

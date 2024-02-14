@@ -59,7 +59,7 @@ class IntraExtraDistanceLabelErrorMixin(BaseLabelErrorMixin):
 
         if self.plot_distribution:
             plot_dist(
-                scores=label_error_scores,
+                scores=np.asarray([x[0] for x in label_error_scores]),
                 title="Distribution of possible label errors",
             )
         return label_error_scores
