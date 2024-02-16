@@ -5,7 +5,7 @@ A holistic self-supervised data cleaning strategy to detect irrelevant samples, 
   <img src="assets/SelfClean_Teaser.svg">
 </p>
 
-[**SelfClean Paper**](https://arxiv.org/abs/2305.17048) 
+[**SelfClean Paper**](https://arxiv.org/abs/2305.17048)
 
 Run `make` for a list of possible targets.
 

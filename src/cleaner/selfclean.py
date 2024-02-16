@@ -14,6 +14,8 @@ from ssl_library.src.pkg import Embedder, embed_dataset
 from ssl_library.src.trainers.dino_trainer import DINOTrainer
 from ssl_library.src.utils.utils import cleanup, init_distributed_mode
 
+# TODO: make sure these are all necessary
+# TODO: make sure they are all default parameters (e.g. BS and epochs are already not)
 DINO_STANDARD_HYPERPARAMETERS = {
     "batch_size": 4,
     "epochs": 50,
@@ -74,6 +76,9 @@ class PretrainingType(Enum):
 
 
 class SelfClean:
+
+    # TODO: Logging levels (standard: each epoch 1 step, lower: each epoch one bar)
+    # TODO: set cleaner parameters
     def __init__(
         self,
     ):
@@ -93,8 +98,6 @@ class SelfClean:
         input_path: Union[str, Path],
         batch_size: int = 32,
         num_workers: int = 48,
-        drop_last: bool = False,
-        pin_memory: bool = True,
         pretraining_type: PretrainingType = PretrainingType.DINO,
         # embedding
         n_layers: int = 1,
@@ -113,8 +116,6 @@ class SelfClean:
             dataset=dataset,
             batch_size=batch_size,
             num_workers=num_workers,
-            drop_last=drop_last,
-            pin_memory=pin_memory,
             pretraining_type=pretraining_type,
             n_layers=n_layers,
             apply_l2_norm=apply_l2_norm,
@@ -130,8 +131,6 @@ class SelfClean:
         dataset,
         batch_size: int = 32,
         num_workers: int = 48,
-        drop_last: bool = False,
-        pin_memory: bool = True,
         pretraining_type: PretrainingType = PretrainingType.DINO,
         # embedding
         n_layers: int = 1,
@@ -146,8 +145,6 @@ class SelfClean:
             dataset=dataset,
             batch_size=batch_size,
             num_workers=num_workers,
-            drop_last=drop_last,
-            pin_memory=pin_memory,
             pretraining_type=pretraining_type,
             n_layers=n_layers,
             apply_l2_norm=apply_l2_norm,
@@ -163,8 +160,6 @@ class SelfClean:
         dataset,
         batch_size: int = 32,
         num_workers: int = 48,
-        drop_last: bool = False,
-        pin_memory: bool = True,
         pretraining_type: PretrainingType = PretrainingType.DINO,
         # embedding
         n_layers: int = 1,
@@ -182,8 +177,6 @@ class SelfClean:
                     dataset=dataset,
                     batch_size=batch_size,
                     num_workers=num_workers,
-                    drop_last=drop_last,
-                    pin_memory=pin_memory,
                     additional_run_info=additional_run_info,
                     wandb_logging=wandb_logging,
                     wandb_project_name=wandb_project_name,
@@ -230,8 +223,6 @@ class SelfClean:
         dataset: Dataset,
         batch_size: int = 32,
         num_workers: int = 48,
-        drop_last: bool = False,
-        pin_memory: bool = True,
         # logging
         additional_run_info: str = "",
         wandb_logging: bool = False,
@@ -247,8 +238,8 @@ class SelfClean:
             batch_size=batch_size,
             sampler=sampler,
             num_workers=num_workers,
-            drop_last=drop_last,
-            pin_memory=pin_memory,
+            drop_last=False,
+            pin_memory=True,
         )
         trainer = DINOTrainer(
             train_dataset=train_loader,

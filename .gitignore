@@ -293,6 +293,8 @@ assets/*.pickle
 notebooks/checkpoints
 notebooks/tmp_models
 assets/cleaning_influence/cache/*
+notebooks/DINO*
+notebooks/tmp
 
 # don't track env file with secret
 .env
