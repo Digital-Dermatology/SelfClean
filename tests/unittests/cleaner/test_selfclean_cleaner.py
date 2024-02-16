@@ -36,6 +36,7 @@ class TestSelfCleanCleaner(unittest.TestCase):
             self.assertTrue("scores" in v)
             self.assertIsNotNone(v["indices"])
             self.assertIsNotNone(v["scores"])
+            self.assertEqual(len(v["indices"]), len(v["scores"]))
 
     def test_predict_with_plotting(self):
         cleaner = SelfCleanCleaner(
