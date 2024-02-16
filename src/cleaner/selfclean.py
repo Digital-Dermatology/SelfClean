@@ -1,8 +1,9 @@
 import gc
 from enum import Enum
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
+import numpy as np
 from torch.utils.data import DataLoader, Dataset, DistributedSampler
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
@@ -76,14 +77,43 @@ class PretrainingType(Enum):
 
 
 class SelfClean:
-
     # TODO: Logging levels (standard: each epoch 1 step, lower: each epoch one bar)
-    # TODO: set cleaner parameters
     def __init__(
         self,
+        # distance calculation
+        distance_function_path: str = "sklearn.metrics.pairwise.",
+        distance_function_name: str = "cosine_similarity",
+        chunk_size: int = 100,
+        precision_type_distance: type = np.float32,
+        # memory management
+        memmap: bool = True,
+        memmap_path: Union[Path, str, None] = None,
+        # plotting
+        plot_distribution: bool = False,
+        plot_top_N: Optional[int] = None,
+        output_path: Optional[str] = None,
+        figsize: tuple = (10, 8),
+        **kwargs,
     ):
-        self.cleaner = None
+        self.memmap = memmap
+        self.memmap_path = memmap_path
+
         self.model = None
+
+        self.cleaner = SelfCleanCleaner(
+            distance_function_path=distance_function_path,
+            distance_function_name=distance_function_name,
+            chunk_size=chunk_size,
+            precision_type_distance=precision_type_distance,
+            memmap=memmap,
+            memmap_path=memmap_path,
+            plot_distribution=plot_distribution,
+            plot_top_N=plot_top_N,
+            output_path=output_path,
+            figsize=figsize,
+            **kwargs,
+        )
+
         self.base_transform = transforms.Compose(
             [
                 transforms.Resize(256, interpolation=InterpolationMode.BICUBIC),
@@ -102,8 +132,6 @@ class SelfClean:
         # embedding
         n_layers: int = 1,
         apply_l2_norm: bool = True,
-        memmap: bool = False,
-        memmap_path: Union[Path, str, None] = None,
         # logging
         wandb_logging: bool = False,
         wandb_project_name: str = "SelfClean",
@@ -119,8 +147,6 @@ class SelfClean:
             pretraining_type=pretraining_type,
             n_layers=n_layers,
             apply_l2_norm=apply_l2_norm,
-            memmap=memmap,
-            memmap_path=memmap_path,
             additional_run_info=input_path.stem,
             wandb_logging=wandb_logging,
             wandb_project_name=wandb_project_name,
@@ -135,8 +161,6 @@ class SelfClean:
         # embedding
         n_layers: int = 1,
         apply_l2_norm: bool = True,
-        memmap: bool = False,
-        memmap_path: Union[Path, str, None] = None,
         # logging
         wandb_logging: bool = False,
         wandb_project_name: str = "SelfClean",
@@ -148,8 +172,6 @@ class SelfClean:
             pretraining_type=pretraining_type,
             n_layers=n_layers,
             apply_l2_norm=apply_l2_norm,
-            memmap=memmap,
-            memmap_path=memmap_path,
             additional_run_info=type(dataset).__name__,
             wandb_logging=wandb_logging,
             wandb_project_name=wandb_project_name,
@@ -164,8 +186,6 @@ class SelfClean:
         # embedding
         n_layers: int = 1,
         apply_l2_norm: bool = True,
-        memmap: bool = False,
-        memmap_path: Union[Path, str, None] = None,
         # logging
         additional_run_info: str = "",
         wandb_logging: bool = False,
@@ -201,14 +221,10 @@ class SelfClean:
             model=self.model,
             n_layers=n_layers,
             normalize=apply_l2_norm,
-            memmap=memmap,
-            memmap_path=memmap_path,
+            memmap=self.memmap,
+            memmap_path=self.memmap_path,
         )
 
-        self.cleaner = SelfCleanCleaner(
-            memmap=memmap,
-            memmap_path=memmap_path,
-        )
         self.cleaner.fit(
             emb_space=emb_space,
             images=images,
