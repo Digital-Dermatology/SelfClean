@@ -18,8 +18,8 @@ from ssl_library.src.utils.utils import cleanup, init_distributed_mode
 # TODO: make sure these are all necessary
 # TODO: make sure they are all default parameters (e.g. BS and epochs are already not)
 DINO_STANDARD_HYPERPARAMETERS = {
-    "batch_size": 4,
-    "epochs": 50,
+    "batch_size": 64,
+    "epochs": 100,
     "optim": "adamw",
     "lr": 0.0005,
     "min_lr": "1e-6",
@@ -30,12 +30,6 @@ DINO_STANDARD_HYPERPARAMETERS = {
     "clip_grad": 3.0,
     "use_lr_scheduler": True,
     "use_wd_scheduler": True,
-    "seed": 42,
-    "fine_tune_from": "None",
-    "save_every_n_epochs": 50,
-    "embed_vis_every_n_epochs": 50,
-    "visualize_attention": True,
-    "imgs_to_visualize": 5,
     "apply_l2_norm": False,
     "model": {
         "out_dim": 4096,
@@ -45,11 +39,10 @@ DINO_STANDARD_HYPERPARAMETERS = {
         "use_bn_in_head": False,
         "norm_last_layer": True,
         "student": {
-            "weights": "IMAGENET1K_V1",
             "patch_size": 16,
             "drop_path_rate": 0.1,
         },
-        "teacher": {"weights": "IMAGENET1K_V1", "drop_path_rate": 0.1},
+        "teacher": {"drop_path_rate": 0.1},
         "eval": {"n_last_blocks": 4, "avgpool_patchtokens": False},
     },
     "dataset": {
@@ -57,7 +50,7 @@ DINO_STANDARD_HYPERPARAMETERS = {
             "global_crops_scale": "(0.7, 1.)",
             "local_crops_scale": "(0.05, 0.4)",
             "global_crops_number": 2,
-            "local_crops_number": 2,
+            "local_crops_number": 8,
             "random_rotation": True,
         }
     },
@@ -77,7 +70,6 @@ class PretrainingType(Enum):
 
 
 class SelfClean:
-    # TODO: Logging levels (standard: each epoch 1 step, lower: each epoch one bar)
     def __init__(
         self,
         # distance calculation
