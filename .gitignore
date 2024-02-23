@@ -270,7 +270,6 @@ tags
 data/*
 wandb/*
 */wandb/*
-#*.csv
 *.ftz
 *.ftz.*
 *.model
@@ -292,9 +291,6 @@ assets/*.pickle
 *.dat
 notebooks/checkpoints
 notebooks/tmp_models
-assets/cleaning_influence/cache/*
 examples/DINO*
 examples/tmp
-
-# don't track env file with secret
-.env
+DINO*
