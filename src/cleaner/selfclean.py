@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 import numpy as np
-from torch.utils.data import DataLoader, Dataset, DistributedSampler
+from torch.utils.data import ConcatDataset, DataLoader, Dataset, DistributedSampler
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torchvision.transforms import InterpolationMode
@@ -15,11 +15,7 @@ from ssl_library.src.pkg import Embedder, embed_dataset
 from ssl_library.src.trainers.dino_trainer import DINOTrainer
 from ssl_library.src.utils.utils import cleanup, init_distributed_mode
 
-# TODO: make sure these are all necessary
-# TODO: make sure they are all default parameters (e.g. BS and epochs are already not)
 DINO_STANDARD_HYPERPARAMETERS = {
-    "batch_size": 64,
-    "epochs": 100,
     "optim": "adamw",
     "lr": 0.0005,
     "min_lr": "1e-6",
@@ -28,9 +24,7 @@ DINO_STANDARD_HYPERPARAMETERS = {
     "warmup_epochs": 10,
     "momentum_teacher": 0.996,
     "clip_grad": 3.0,
-    "use_lr_scheduler": True,
-    "use_wd_scheduler": True,
-    "apply_l2_norm": False,
+    "apply_l2_norm": True,
     "model": {
         "out_dim": 4096,
         "emb_dim": 192,
@@ -39,8 +33,7 @@ DINO_STANDARD_HYPERPARAMETERS = {
         "use_bn_in_head": False,
         "norm_last_layer": True,
         "student": {
-            "patch_size": 16,
-            "drop_path_rate": 0.1,
+            "drop_path_rate": 0.1,  # TODO: check influence of this
         },
         "teacher": {"drop_path_rate": 0.1},
         "eval": {"n_last_blocks": 4, "avgpool_patchtokens": False},
@@ -50,7 +43,7 @@ DINO_STANDARD_HYPERPARAMETERS = {
             "global_crops_scale": "(0.7, 1.)",
             "local_crops_scale": "(0.05, 0.4)",
             "global_crops_number": 2,
-            "local_crops_number": 8,
+            "local_crops_number": 12,
             "random_rotation": True,
         }
     },
@@ -118,6 +111,7 @@ class SelfClean:
     def run_on_image_folder(
         self,
         input_path: Union[str, Path],
+        epochs: int = 100,
         batch_size: int = 32,
         num_workers: int = 48,
         pretraining_type: PretrainingType = PretrainingType.DINO,
@@ -134,6 +128,7 @@ class SelfClean:
         dataset = ImageFolder(root=input_path)
         return self._run(
             dataset=dataset,
+            epochs=epochs,
             batch_size=batch_size,
             num_workers=num_workers,
             pretraining_type=pretraining_type,
@@ -147,6 +142,7 @@ class SelfClean:
     def run_on_dataset(
         self,
         dataset,
+        epochs: int = 100,
         batch_size: int = 32,
         num_workers: int = 48,
         pretraining_type: PretrainingType = PretrainingType.DINO,
@@ -159,6 +155,7 @@ class SelfClean:
     ):
         return self._run(
             dataset=dataset,
+            epochs=epochs,
             batch_size=batch_size,
             num_workers=num_workers,
             pretraining_type=pretraining_type,
@@ -172,9 +169,11 @@ class SelfClean:
     def _run(
         self,
         dataset,
+        epochs: int = 100,
         batch_size: int = 32,
         num_workers: int = 48,
         pretraining_type: PretrainingType = PretrainingType.DINO,
+        hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         # embedding
         n_layers: int = 1,
         apply_l2_norm: bool = True,
@@ -187,7 +186,9 @@ class SelfClean:
             if pretraining_type is PretrainingType.DINO:
                 self.model = self.train_dino(
                     dataset=dataset,
+                    epochs=epochs,
                     batch_size=batch_size,
+                    hyperparameters=hyperparameters,
                     num_workers=num_workers,
                     additional_run_info=additional_run_info,
                     wandb_logging=wandb_logging,
@@ -204,7 +205,7 @@ class SelfClean:
         dataset.transform = self.base_transform
         torch_dataset = DataLoader(
             dataset,
-            batch_size=128,
+            batch_size=batch_size,
             drop_last=False,
             shuffle=False,
         )
@@ -216,12 +217,15 @@ class SelfClean:
             memmap=self.memmap,
             memmap_path=self.memmap_path,
         )
+        # for default datasets we can set the paths manually
+        if hasattr(dataset, "_image_files") and paths is None:
+            paths = dataset._image_files
 
         self.cleaner.fit(
-            emb_space=emb_space,
-            images=images,
-            labels=labels,
-            paths=paths,
+            emb_space=np.asarray(emb_space),
+            images=np.asarray(images),
+            labels=np.asarray(labels),
+            paths=np.asarray(paths) if paths is not None else paths,
             class_labels=dataset.classes if hasattr(dataset, "classes") else None,
         )
         return self.cleaner.predict()
@@ -229,17 +233,32 @@ class SelfClean:
     def train_dino(
         self,
         dataset: Dataset,
+        epochs: int = 100,
         batch_size: int = 32,
+        hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         num_workers: int = 48,
         # logging
         additional_run_info: str = "",
         wandb_logging: bool = False,
         wandb_project_name: str = "SelfClean",
     ):
+        assert all(
+            key in hyperparameters for key in DINO_STANDARD_HYPERPARAMETERS
+        ), "`hyperparameters` need to contain all standard hyperparameters."
+
         init_distributed_mode()
-        dataset.transform = iBOTDataAugmentation(
-            **DINO_STANDARD_HYPERPARAMETERS["dataset"]["augmentations"]
-        )
+
+        hyperparameters["epochs"] = epochs
+        hyperparameters["batch_size"] = batch_size
+        if type(dataset) is ConcatDataset:
+            for d in dataset.datasets:
+                d.transform = iBOTDataAugmentation(
+                    **hyperparameters["dataset"]["augmentations"]
+                )
+        else:
+            dataset.transform = iBOTDataAugmentation(
+                **hyperparameters["dataset"]["augmentations"]
+            )
         sampler = DistributedSampler(dataset, shuffle=True)
         train_loader = DataLoader(
             dataset,
@@ -251,7 +270,7 @@ class SelfClean:
         )
         trainer = DINOTrainer(
             train_dataset=train_loader,
-            config=DINO_STANDARD_HYPERPARAMETERS,
+            config=hyperparameters,
             additional_run_info=additional_run_info,
             wandb_logging=wandb_logging,
             wandb_project_name=wandb_project_name,
