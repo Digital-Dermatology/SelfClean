@@ -250,15 +250,30 @@ class SelfClean:
 
         hyperparameters["epochs"] = epochs
         hyperparameters["batch_size"] = batch_size
+
+        ssl_augmentation = iBOTDataAugmentation(
+            **hyperparameters["dataset"]["augmentations"]
+        )
+        # TODO: refactor this
         if type(dataset) is ConcatDataset:
             for d in dataset.datasets:
-                d.transform = iBOTDataAugmentation(
-                    **hyperparameters["dataset"]["augmentations"]
-                )
+                if hasattr(d, "transforms"):
+
+                    def _transforms_wrapper(image, label):
+                        return ssl_augmentation(image), label
+
+                    d.transforms = _transforms_wrapper
+                else:
+                    d.transform = ssl_augmentation
         else:
-            dataset.transform = iBOTDataAugmentation(
-                **hyperparameters["dataset"]["augmentations"]
-            )
+            if hasattr(dataset, "transforms"):
+
+                def _transforms_wrapper(image, label):
+                    return ssl_augmentation(image), label
+
+                dataset.transforms = _transforms_wrapper
+            else:
+                dataset.transform = ssl_augmentation
         sampler = DistributedSampler(dataset, shuffle=True)
         train_loader = DataLoader(
             dataset,

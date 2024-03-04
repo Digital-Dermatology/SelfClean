@@ -292,5 +292,6 @@ assets/*.pickle
 notebooks/checkpoints
 notebooks/tmp_models
 examples/DINO*
-examples/tmp
+examples/tmp/*
+examples/OxfordIIITPet/
 DINO*
