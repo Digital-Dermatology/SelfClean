@@ -4,12 +4,13 @@ from pathlib import Path
 from typing import Optional, Union
 
 import numpy as np
-from torch.utils.data import ConcatDataset, DataLoader, Dataset, DistributedSampler
+from torch.utils.data import DataLoader, Dataset, DistributedSampler
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torchvision.transforms import InterpolationMode
 
 from src.cleaner.selfclean_cleaner import SelfCleanCleaner
+from src.utils.utils import set_dataset_transformation
 from ssl_library.src.augmentations.ibot import iBOTDataAugmentation
 from ssl_library.src.pkg import Embedder, embed_dataset
 from ssl_library.src.trainers.dino_trainer import DINOTrainer
@@ -202,7 +203,7 @@ class SelfClean:
             else:
                 raise ValueError(f"Unknown pretraining type: {pretraining_type}")
 
-        dataset.transform = self.base_transform
+        set_dataset_transformation(dataset=dataset, transform=self.base_transform)
         torch_dataset = DataLoader(
             dataset,
             batch_size=batch_size,
@@ -254,26 +255,7 @@ class SelfClean:
         ssl_augmentation = iBOTDataAugmentation(
             **hyperparameters["dataset"]["augmentations"]
         )
-        # TODO: refactor this
-        if type(dataset) is ConcatDataset:
-            for d in dataset.datasets:
-                if hasattr(d, "transforms"):
-
-                    def _transforms_wrapper(image, label):
-                        return ssl_augmentation(image), label
-
-                    d.transforms = _transforms_wrapper
-                else:
-                    d.transform = ssl_augmentation
-        else:
-            if hasattr(dataset, "transforms"):
-
-                def _transforms_wrapper(image, label):
-                    return ssl_augmentation(image), label
-
-                dataset.transforms = _transforms_wrapper
-            else:
-                dataset.transform = ssl_augmentation
+        set_dataset_transformation(dataset=dataset, transform=ssl_augmentation)
         sampler = DistributedSampler(dataset, shuffle=True)
         train_loader = DataLoader(
             dataset,

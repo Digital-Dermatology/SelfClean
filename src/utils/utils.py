@@ -1,6 +1,8 @@
 import math
 
 import numpy as np
+import torch
+from torch.utils.data import ConcatDataset, Dataset
 
 
 def calc_row_idx(k, n):
@@ -41,3 +43,21 @@ def has_same_label(arr):
     arr = np.array(arr)
     result = arr[:, None] == arr
     return result
+
+
+def set_dataset_transformation(dataset: Dataset, transform: torch.nn.Module):
+    def _set_transform(d: Dataset, transform: torch.nn.Module):
+        if hasattr(d, "transforms"):
+
+            def _transforms_wrapper(image, label):
+                return transform(image), label
+
+            d.transforms = _transforms_wrapper
+        if hasattr(d, "transform"):
+            d.transform = transform
+
+    if type(dataset) is ConcatDataset:
+        for d in dataset.datasets:
+            _set_transform(d=d, transform=transform)
+    else:
+        _set_transform(d=dataset, transform=transform)
