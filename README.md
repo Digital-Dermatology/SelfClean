@@ -1,12 +1,19 @@
 # SelfClean
-A holistic self-supervised data cleaning strategy to detect irrelevant samples, near duplicates and label errors.
+
+[**SelfClean Paper**](https://arxiv.org/abs/2305.17048) | [**Data Cleaning Protocol Paper**](https://arxiv.org/abs/2309.06961)
 
 <p align="center">
   <img src="assets/SelfClean_Teaser.svg">
 </p>
 
-[**SelfClean Paper**](https://arxiv.org/abs/2305.17048)
+<h2 align="center">
+    
+[![PyPI version](https://badge.fury.io/py/selfclean.svg)](https://badge.fury.io/py/selfclean)
+![Contribotion](https://img.shields.io/badge/Contribution-Welcome-brightgreen)
 
+</h2>
+
+A holistic self-supervised data cleaning strategy to detect irrelevant samples, near duplicates, and label errors.
 
 ## Development Environment
 Run `make` for a list of possible targets.
