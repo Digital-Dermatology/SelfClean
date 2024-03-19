@@ -11,14 +11,37 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-            - uses: actions/checkout@v2
-            - uses: actions/setup-python@v2
+            - uses: actions/checkout@v4 # without submodules
+
+            - name: Disable the keychain credential helper
+              run: git config --global credential.helper ""
+
+            - name: Enable the local store credential helper
+              run: git config --global --add credential.helper store
+
+            - name: Add credential
+              run: echo "https://x-access-token:${{ secrets.SUBMODULE_GITHUB_TOKEN }}@github.com" >> ~/.git-credentials
+
+            - name: Tell git to use https instead of ssh whenever it encounters it
+              run: 'git config --global url."https://github.com/".insteadof git@github.com:'
+
+            - name: Git submodule initialization
+              run: |
+                  git submodule update --init --recursive
+
+            - name: Set up Python
+              uses: actions/setup-python@v4
               with:
-                  python-version: 3.8
+                  # Semantic version range syntax or exact version of a Python version
+                  python-version: "3.9"
+                  # Optional - x64 or x86 architecture, defaults to x64
+                  architecture: "x64"
+
             - name: "Installs dependencies"
               run: |
                   python3 -m pip install --upgrade pip
                   python3 -m pip install setuptools wheel twine
+
             - name: "Builds and uploads to PyPI"
               run: |
                   python3 setup.py sdist bdist_wheel
