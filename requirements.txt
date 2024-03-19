@@ -21,5 +21,3 @@ seaborn
 SciencePlots
 scikit-image
 codecov
-randomname
-setuptools_scm
