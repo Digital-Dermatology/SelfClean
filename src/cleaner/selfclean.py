@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 import numpy as np
+import torch
 from torch.utils.data import DataLoader, Dataset, DistributedSampler
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
@@ -119,7 +120,8 @@ class SelfClean:
         epochs: int = 100,
         batch_size: int = 32,
         ssl_pre_training: bool = True,
-        num_workers: int = 48,
+        work_dir: Optional[str] = None,
+        num_workers: int = 24,
         pretraining_type: PretrainingType = PretrainingType.DINO,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         # embedding
@@ -139,6 +141,7 @@ class SelfClean:
             epochs=epochs,
             batch_size=batch_size,
             ssl_pre_training=ssl_pre_training,
+            work_dir=work_dir,
             num_workers=num_workers,
             pretraining_type=pretraining_type,
             hyperparameters=hyperparameters,
@@ -157,7 +160,8 @@ class SelfClean:
         epochs: int = 100,
         batch_size: int = 32,
         ssl_pre_training: bool = True,
-        num_workers: int = 48,
+        work_dir: Optional[str] = None,
+        num_workers: int = 24,
         pretraining_type: PretrainingType = PretrainingType.DINO,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         # embedding
@@ -173,6 +177,7 @@ class SelfClean:
             epochs=epochs,
             batch_size=batch_size,
             ssl_pre_training=ssl_pre_training,
+            work_dir=work_dir,
             num_workers=num_workers,
             pretraining_type=pretraining_type,
             hyperparameters=hyperparameters,
@@ -191,7 +196,8 @@ class SelfClean:
         epochs: int = 100,
         batch_size: int = 32,
         ssl_pre_training: bool = True,
-        num_workers: int = 48,
+        work_dir: Optional[str] = None,
+        num_workers: int = 24,
         pretraining_type: PretrainingType = PretrainingType.DINO,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         # embedding
@@ -209,6 +215,7 @@ class SelfClean:
                     epochs=epochs,
                     batch_size=batch_size,
                     ssl_pre_training=ssl_pre_training,
+                    work_dir=work_dir,
                     hyperparameters=hyperparameters,
                     num_workers=num_workers,
                     additional_run_info=additional_run_info,
@@ -257,8 +264,9 @@ class SelfClean:
         epochs: int = 100,
         batch_size: int = 32,
         ssl_pre_training: bool = True,
+        work_dir: Optional[str] = None,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
-        num_workers: int = 48,
+        num_workers: int = 24,
         # logging
         additional_run_info: str = "",
         wandb_logging: bool = False,
@@ -268,24 +276,29 @@ class SelfClean:
             key in hyperparameters for key in DINO_STANDARD_HYPERPARAMETERS
         ), "`hyperparameters` need to contain all standard hyperparameters."
 
-        init_distributed_mode()
-
         hyperparameters["epochs"] = epochs
         hyperparameters["batch_size"] = batch_size
         hyperparameters["ssl_pre_training"] = ssl_pre_training
+        if work_dir is not None:
+            hyperparameters["work_dir"] = work_dir
 
+        init_distributed_mode()
         ssl_augmentation = iBOTDataAugmentation(
             **hyperparameters["dataset"]["augmentations"]
         )
         set_dataset_transformation(dataset=dataset, transform=ssl_augmentation)
-        sampler = DistributedSampler(dataset, shuffle=True)
+        if torch.cuda.is_available():
+            sampler = DistributedSampler(dataset, shuffle=True)
+            kwargs = {"sampler": sampler}
+        else:
+            kwargs = {"shuffle": True}
         train_loader = DataLoader(
             dataset,
             batch_size=batch_size,
-            sampler=sampler,
             num_workers=num_workers,
             drop_last=False,
             pin_memory=True,
+            **kwargs,
         )
         trainer = DINOTrainer(
             train_dataset=train_loader,
@@ -295,7 +308,7 @@ class SelfClean:
             wandb_project_name=wandb_project_name,
         )
         model = trainer.fit()
-        del trainer
+        del trainer, train_loader
         gc.collect()
         cleanup()
         return model
