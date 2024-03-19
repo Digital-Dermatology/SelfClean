@@ -3,9 +3,10 @@ from typing import List, Tuple
 import numpy as np
 from scipy.cluster.hierarchy import single
 
-from src.cleaner.irrelevants.base_irrelevant_mixin import BaseIrrelevantMixin
-from src.scoring.lad_scoring import LAD
 from ssl_library.src.utils.logging import plot_dist
+
+from ...cleaner.irrelevants.base_irrelevant_mixin import BaseIrrelevantMixin
+from ...scoring.lad_scoring import LAD
 
 
 class LADIrrelevantMixin(BaseIrrelevantMixin):

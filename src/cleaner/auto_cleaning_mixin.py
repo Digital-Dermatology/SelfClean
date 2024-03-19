@@ -4,7 +4,7 @@ import numpy as np
 import scipy
 import scipy.stats
 
-from src.utils.plotting import (
+from ..utils.plotting import (
     plot_frac_cut,
     plot_sensitivity,
     subplot_frac_cut,

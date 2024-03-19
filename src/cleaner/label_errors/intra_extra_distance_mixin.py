@@ -3,9 +3,10 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 
-from src.cleaner.label_errors.base_label_error_mixin import BaseLabelErrorMixin
-from src.utils.utils import has_same_label
 from ssl_library.src.utils.logging import plot_dist
+
+from ...cleaner.label_errors.base_label_error_mixin import BaseLabelErrorMixin
+from ...utils.utils import has_same_label
 
 
 class IntraExtraDistanceLabelErrorMixin(BaseLabelErrorMixin):

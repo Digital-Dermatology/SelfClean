@@ -4,9 +4,10 @@ from typing import List, Tuple
 import numpy as np
 from tqdm import tqdm
 
-from src.cleaner.near_duplicates.base_near_duplicate_mixin import BaseNearDuplicateMixin
-from src.utils.utils import condensed_to_square
 from ssl_library.src.utils.logging import plot_dist
+
+from ...cleaner.near_duplicates.base_near_duplicate_mixin import BaseNearDuplicateMixin
+from ...utils.utils import condensed_to_square
 
 
 class EmbeddingDistanceMixin(BaseNearDuplicateMixin):

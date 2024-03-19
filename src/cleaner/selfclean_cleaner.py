@@ -8,16 +8,14 @@ import scienceplots  # noqa: F401
 import sklearn  # noqa: F401
 from tqdm import tqdm
 
-import src.distances  # noqa: F401
-import src.distances.projective_distance  # noqa: F401
-from src.cleaner.auto_cleaning_mixin import AutoCleaningMixin
-from src.cleaner.base_cleaner import BaseCleaner
-from src.cleaner.irrelevants.lad_mixin import LADIrrelevantMixin
-from src.cleaner.label_errors.intra_extra_distance_mixin import (
+from ..cleaner.auto_cleaning_mixin import AutoCleaningMixin
+from ..cleaner.base_cleaner import BaseCleaner
+from ..cleaner.irrelevants.lad_mixin import LADIrrelevantMixin
+from ..cleaner.label_errors.intra_extra_distance_mixin import (
     IntraExtraDistanceLabelErrorMixin,
 )
-from src.cleaner.near_duplicates.embedding_distance_mixin import EmbeddingDistanceMixin
-from src.utils.plotting import plot_inspection_result
+from ..cleaner.near_duplicates.embedding_distance_mixin import EmbeddingDistanceMixin
+from ..utils.plotting import plot_inspection_result
 
 
 class SelfCleanCleaner(

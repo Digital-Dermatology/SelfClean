@@ -2,9 +2,10 @@ from typing import List, Tuple
 
 import numpy as np
 
-from src.cleaner.irrelevants.base_irrelevant_mixin import BaseIrrelevantMixin
-from src.utils.plotting import plot_irrelevant_samples
 from ssl_library.src.utils.logging import plot_dist
+
+from ...cleaner.irrelevants.base_irrelevant_mixin import BaseIrrelevantMixin
+from ...utils.plotting import plot_irrelevant_samples
 
 
 class QuantileIrrelevantMixin(BaseIrrelevantMixin):
