@@ -27,8 +27,9 @@ class IntraExtraDistanceLabelErrorMixin(BaseLabelErrorMixin):
         # ensure one can not choose it's own distance
         np.fill_diagonal(o_hot_same, np.inf)
         # calc. the matrices for same and other lbl dists.
-        min_same = np.nanmin((o_hot_same * self.distance_matrix), axis=-1)
-        min_diff = np.nanmin((o_hot_diff * self.distance_matrix), axis=-1)
+        with np.errstate(all="ignore"):
+            min_same = np.nanmin((o_hot_same * self.distance_matrix), axis=-1)
+            min_diff = np.nanmin((o_hot_diff * self.distance_matrix), axis=-1)
         # check if there are samples without any same labels
         missing_same_indices = np.where(np.sum(o_hot_same == 1, axis=-1) == 0)[0]
         if len(missing_same_indices) > 0:

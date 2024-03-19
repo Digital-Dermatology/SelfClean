@@ -34,9 +34,13 @@ DINO_STANDARD_HYPERPARAMETERS = {
         "use_bn_in_head": False,
         "norm_last_layer": True,
         "student": {
-            "drop_path_rate": 0.1,  # TODO: check influence of this
+            "drop_path_rate": 0.1,
+            "pretrained": True,
         },
-        "teacher": {"drop_path_rate": 0.1},
+        "teacher": {
+            "drop_path_rate": 0.1,
+            "pretrained": True,
+        },
         "eval": {"n_last_blocks": 4, "avgpool_patchtokens": False},
     },
     "dataset": {
@@ -114,12 +118,15 @@ class SelfClean:
         input_path: Union[str, Path],
         epochs: int = 100,
         batch_size: int = 32,
+        ssl_pre_training: bool = True,
         num_workers: int = 48,
         pretraining_type: PretrainingType = PretrainingType.DINO,
+        hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         # embedding
         n_layers: int = 1,
         apply_l2_norm: bool = True,
         # logging
+        dataset_name: Optional[str] = None,
         wandb_logging: bool = False,
         wandb_project_name: str = "SelfClean",
     ):
@@ -131,11 +138,15 @@ class SelfClean:
             dataset=dataset,
             epochs=epochs,
             batch_size=batch_size,
+            ssl_pre_training=ssl_pre_training,
             num_workers=num_workers,
             pretraining_type=pretraining_type,
+            hyperparameters=hyperparameters,
             n_layers=n_layers,
             apply_l2_norm=apply_l2_norm,
-            additional_run_info=input_path.stem,
+            additional_run_info=input_path.stem
+            if dataset_name is None
+            else dataset_name,
             wandb_logging=wandb_logging,
             wandb_project_name=wandb_project_name,
         )
@@ -145,12 +156,15 @@ class SelfClean:
         dataset,
         epochs: int = 100,
         batch_size: int = 32,
+        ssl_pre_training: bool = True,
         num_workers: int = 48,
         pretraining_type: PretrainingType = PretrainingType.DINO,
+        hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         # embedding
         n_layers: int = 1,
         apply_l2_norm: bool = True,
         # logging
+        dataset_name: Optional[str] = None,
         wandb_logging: bool = False,
         wandb_project_name: str = "SelfClean",
     ):
@@ -158,11 +172,15 @@ class SelfClean:
             dataset=dataset,
             epochs=epochs,
             batch_size=batch_size,
+            ssl_pre_training=ssl_pre_training,
             num_workers=num_workers,
             pretraining_type=pretraining_type,
+            hyperparameters=hyperparameters,
             n_layers=n_layers,
             apply_l2_norm=apply_l2_norm,
-            additional_run_info=type(dataset).__name__,
+            additional_run_info=type(dataset).__name__
+            if dataset_name is None
+            else dataset_name,
             wandb_logging=wandb_logging,
             wandb_project_name=wandb_project_name,
         )
@@ -172,6 +190,7 @@ class SelfClean:
         dataset,
         epochs: int = 100,
         batch_size: int = 32,
+        ssl_pre_training: bool = True,
         num_workers: int = 48,
         pretraining_type: PretrainingType = PretrainingType.DINO,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
@@ -189,6 +208,7 @@ class SelfClean:
                     dataset=dataset,
                     epochs=epochs,
                     batch_size=batch_size,
+                    ssl_pre_training=ssl_pre_training,
                     hyperparameters=hyperparameters,
                     num_workers=num_workers,
                     additional_run_info=additional_run_info,
@@ -236,6 +256,7 @@ class SelfClean:
         dataset: Dataset,
         epochs: int = 100,
         batch_size: int = 32,
+        ssl_pre_training: bool = True,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         num_workers: int = 48,
         # logging
@@ -251,6 +272,7 @@ class SelfClean:
 
         hyperparameters["epochs"] = epochs
         hyperparameters["batch_size"] = batch_size
+        hyperparameters["ssl_pre_training"] = ssl_pre_training
 
         ssl_augmentation = iBOTDataAugmentation(
             **hyperparameters["dataset"]["augmentations"]
