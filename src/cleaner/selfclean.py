@@ -144,9 +144,9 @@ class SelfClean:
             hyperparameters=hyperparameters,
             n_layers=n_layers,
             apply_l2_norm=apply_l2_norm,
-            additional_run_info=input_path.stem
-            if dataset_name is None
-            else dataset_name,
+            additional_run_info=(
+                input_path.stem if dataset_name is None else dataset_name
+            ),
             wandb_logging=wandb_logging,
             wandb_project_name=wandb_project_name,
         )
@@ -178,9 +178,9 @@ class SelfClean:
             hyperparameters=hyperparameters,
             n_layers=n_layers,
             apply_l2_norm=apply_l2_norm,
-            additional_run_info=type(dataset).__name__
-            if dataset_name is None
-            else dataset_name,
+            additional_run_info=(
+                type(dataset).__name__ if dataset_name is None else dataset_name
+            ),
             wandb_logging=wandb_logging,
             wandb_project_name=wandb_project_name,
         )
