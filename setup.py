@@ -1,8 +1,9 @@
 import codecs
 import os.path
+import re
 from os.path import abspath, dirname, join
 
-from setuptools import find_namespace_packages, setup
+from setuptools import find_packages, setup
 
 
 def read(rel_path):
@@ -17,28 +18,31 @@ def parse_requirements(filename):
 
 
 README_MD = open(join(dirname(abspath(__file__)), "README.md")).read()
+PACKAGE_NAME = "selfclean"
+SOURCE_DIRECTORY = "src"
+SOURCE_PACKAGE_REGEX = re.compile(rf"^{SOURCE_DIRECTORY}")
+
+source_packages = find_packages(include=[SOURCE_DIRECTORY, f"{SOURCE_DIRECTORY}.*"])
+proj_packages = [
+    SOURCE_PACKAGE_REGEX.sub(PACKAGE_NAME, name) for name in source_packages
+]
 
 setup(
-    name="selfclean",
+    name=PACKAGE_NAME,
+    packages=proj_packages,
+    package_dir={PACKAGE_NAME: SOURCE_DIRECTORY},
     version="0.0.1",
     author="Fabian Groeger",
-    author_email="fabian.groeger@bluewin.ch",
+    author_email="fabian.groeger@unibas.ch",
     description="A holistic self-supervised data cleaning strategy to detect irrelevant samples, near duplicates and label errors.",
     long_description=README_MD,
     long_description_content_type="text/markdown",
     url="https://github.com/Digital-Dermatology/SelfClean",
-    packages=find_namespace_packages(),
-    keywords="data-cleaning, self-supervised-learning, data-centric-ai",
-    install_reqs=parse_requirements("requirements.txt"),
+    python_requires=">=3.6",
+    install_requires=parse_requirements("requirements.txt"),
+    setup_requires=parse_requirements("requirements.txt"),
     classifiers=[
-        "Development Status :: 1 - Planning",
-        "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: BSD License",
-        "Operating System :: POSIX :: Linux",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
+        "Operating System :: OS Independent",
     ],
 )
