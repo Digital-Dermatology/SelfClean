@@ -15,6 +15,8 @@ from ..cleaner.label_errors.intra_extra_distance_mixin import (
     IntraExtraDistanceLabelErrorMixin,
 )
 from ..cleaner.near_duplicates.embedding_distance_mixin import EmbeddingDistanceMixin
+from ..distances import *  # noqa: F401, F403
+from ..distances.projective_distance import *  # noqa: F401, F403
 from ..utils.plotting import plot_inspection_result
 
 

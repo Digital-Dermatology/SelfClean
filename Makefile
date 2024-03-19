@@ -130,5 +130,8 @@ start_jupyter: _build  ##@Docker start a jupyter notebook inside the docker imag
 ###########################
 .PHONY: test
 test: _build  ##@Test run all tests in the project
-    # Ignore integration tests flag: --ignore=test/manual_integration_tests/
-	$(DOCKER_CMD) /bin/bash -c "python3 -m coverage run -m pytest tests --junitxml=report.xml; coverage report -i --include=src/*; coverage xml -i --include=src/*;"
+	$(DOCKER_CMD) /bin/bash -c "python3 -m coverage run -m pytest tests --junitxml=report.xml; coverage report -i --include=src/* --omit="src/ssl_library/*"; coverage xml -i --include=src/* --omit="src/ssl_library/*";"
+
+.PHONY: unittest
+unittest: _build  ##@Test run all unittests in the project
+	$(DOCKER_CMD) /bin/bash -c "python3 -m coverage run -m pytest tests --junitxml=report.xml --ignore=tests/integration_tests; coverage report -i --include=src/* --omit="src/ssl_library/*"; coverage xml -i --include=src/* --omit="src/ssl_library/*";"

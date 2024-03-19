@@ -7,7 +7,7 @@
 </p>
 
 <h2 align="center">
-    
+
 [![PyPI version](https://badge.fury.io/py/selfclean.svg)](https://badge.fury.io/py/selfclean)
 ![Contribotion](https://img.shields.io/badge/Contribution-Welcome-brightgreen)
 

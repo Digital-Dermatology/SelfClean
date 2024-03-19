@@ -4,9 +4,8 @@ from typing import List, Tuple
 import numpy as np
 from tqdm import tqdm
 
-from ssl_library.src.utils.logging import plot_dist
-
 from ...cleaner.near_duplicates.base_near_duplicate_mixin import BaseNearDuplicateMixin
+from ...ssl_library.src.utils.logging import plot_dist
 from ...utils.utils import condensed_to_square
 
 

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from torchvision import transforms
 
-from ssl_library.src.utils.logging import create_subtitle, denormalize_image
+from ..ssl_library.src.utils.logging import create_subtitle, denormalize_image
 
 
 def plot_inspection_result(

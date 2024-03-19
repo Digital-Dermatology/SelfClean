@@ -1,7 +1,6 @@
 [project]
 name = "SelfClean"
 description = "A holistic self-supervised data cleaning strategy to detect irrelevant samples, near duplicates and label errors."
-version = "0.0.2"
 authors = [
     { name = "Fabian Gröger", email = "fabian.groeger@unibas.ch" },
 ]
@@ -14,7 +13,7 @@ profile = "black"
 skip_gitignore=true
 py_version=39
 default_section = "THIRDPARTY"
-known_thirdparty=["wandb","darlinglib"]
+known_thirdparty=["wandb"]
 
 [tool.pytest.ini_options]
 # Set true to see logger ouput in test command line window

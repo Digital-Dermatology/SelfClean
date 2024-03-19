@@ -2,9 +2,8 @@ from typing import List, Tuple
 
 import numpy as np
 
-from ssl_library.src.utils.logging import plot_dist
-
 from ...cleaner.irrelevants.base_irrelevant_mixin import BaseIrrelevantMixin
+from ...ssl_library.src.utils.logging import plot_dist
 from ...utils.plotting import plot_irrelevant_samples
 
 

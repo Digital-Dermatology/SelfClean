@@ -71,7 +71,7 @@ class TestSelfCleanCleaner(unittest.TestCase):
     def test_predict_distance_function(self):
         cleaner = SelfCleanCleaner(
             memmap=False,
-            distance_function_path="src.distances.projective_distance.",
+            distance_function_path="",
             distance_function_name="pairwise_projective_distance",
         )
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)

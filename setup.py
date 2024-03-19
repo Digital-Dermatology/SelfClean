@@ -3,6 +3,7 @@ import os.path
 import re
 from os.path import abspath, dirname, join
 
+import setuptools_scm  # noqa: F401
 from setuptools import find_packages, setup
 
 
@@ -31,7 +32,7 @@ setup(
     name=PACKAGE_NAME,
     packages=proj_packages,
     package_dir={PACKAGE_NAME: SOURCE_DIRECTORY},
-    version="0.0.2",
+    use_scm_version=True,
     author="Fabian Groeger",
     author_email="fabian.groeger@unibas.ch",
     description="A holistic self-supervised data cleaning strategy to detect irrelevant samples, near duplicates and label errors.",

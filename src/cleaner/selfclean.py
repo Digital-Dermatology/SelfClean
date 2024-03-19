@@ -9,12 +9,11 @@ from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torchvision.transforms import InterpolationMode
 
-from ssl_library.src.augmentations.ibot import iBOTDataAugmentation
-from ssl_library.src.pkg import Embedder, embed_dataset
-from ssl_library.src.trainers.dino_trainer import DINOTrainer
-from ssl_library.src.utils.utils import cleanup, init_distributed_mode
-
 from ..cleaner.selfclean_cleaner import SelfCleanCleaner
+from ..ssl_library.src.augmentations.ibot import iBOTDataAugmentation
+from ..ssl_library.src.pkg import Embedder, embed_dataset
+from ..ssl_library.src.trainers.dino_trainer import DINOTrainer
+from ..ssl_library.src.utils.utils import cleanup, init_distributed_mode
 from ..utils.utils import set_dataset_transformation
 
 DINO_STANDARD_HYPERPARAMETERS = {

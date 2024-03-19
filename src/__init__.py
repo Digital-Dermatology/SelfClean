@@ -5,3 +5,5 @@ A holistic self-supervised data cleaning strategy to detect irrelevant samples, 
 """
 
 __author__ = "Fabian Groeger"
+
+from .cleaner.selfclean import SelfClean  # noqa: F401
