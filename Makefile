@@ -85,40 +85,6 @@ NUM_THREADS := $(shell expr $(NUM_CORES) / $(NUM_GPUS))
 DOCKER_ARGS := -v $$PWD:/workspace/ -v $(LOCAL_DATA_DIR):/data/ -p $(PORT):8888 --rm
 DOCKER_CMD := docker run $(DOCKER_ARGS) $(GPU_ARGS) $(DOCKER_CONTAINER_NAME) -it $(PROJECTNAME):$(GIT_BRANCH)
 
-# SSH
-PORT := 22
-USERNAME := fgroger
-
-###########################
-# COMMANDS
-###########################
-# Thanks to: https://stackoverflow.com/a/10858332
-# Check that given variables are set and all have non-empty values,
-# die with an error otherwise.
-#
-# Params:
-#   1. Variable name(s) to test.
-#   2. (optional) Error message to print.
-check_defined = \
-    $(strip $(foreach 1,$1, \
-        $(call __check_defined,$1,$(strip $(value 2)))))
-__check_defined = \
-    $(if $(value $1),, \
-      $(error Undefined $1$(if $2, ($2))))
-
-###########################
-# SSH UTILS
-###########################
-.PHONY: push_ssh
-push_ssh: clean  ##@SSH pushes all the directories along with the files to a remote SSH server
-	$(call check_defined, SSH_CONN)
-	rsync -r --exclude='data/' --exclude='.git/' --exclude='.github/' --exclude='wandb/' --exclude='assets/' --progress -e 'ssh -p $(PORT)' $(PROJECT_DIR)/ $(USERNAME)@$(SSH_CONN):$(PROJECTNAME)/
-
-.PHONY: pull_ssh
-pull_ssh:  ##@SSH pulls directories from a remote SSH server
-	$(call check_defined, SSH_CONN)
-	scp -r -P $(PORT) $(USERNAME)@$(SSH_CONN):$(PROJECTNAME) .
-
 ###########################
 # PROJECT UTILS
 ###########################
@@ -126,9 +92,10 @@ pull_ssh:  ##@SSH pulls directories from a remote SSH server
 init:  ##@Utils initializes the project and pulls all the nessecary data
 	@git submodule update --init --recursive
 
-.PHONY: update_data_ref
-update_data_ref:  ##@Utils updates the reference to the submodule to its latest commit
-	@git submodule update --remote --merge
+.PHONY: install
+install:  ##@Utils install the dependencies for the project
+	@python3 -m pip install -r requirements.txt
+	@pre-commit install
 
 .PHONY: clean
 clean:  ##@Utils clean the project
@@ -141,10 +108,6 @@ clean:  ##@Utils clean the project
 	@rm -f -R .idea
 	@rm -f -R tmp/
 	@rm -f -R cov_html/
-
-.PHONY: install
-install:  ##@Utils install the dependencies for the project
-	python3 -m pip install -r requirements.txt
 
 ###########################
 # DOCKER

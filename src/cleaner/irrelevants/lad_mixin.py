@@ -27,6 +27,6 @@ class LADIrrelevantMixin(BaseIrrelevantMixin):
         if self.plot_distribution and irrelevant_score is not None:
             plot_dist(
                 scores=np.asarray([x[0] for x in irrelevant_score]),
-                title="Distribution of irrelevant samples samples",
+                title="Distribution of irrelevant samples",
             )
         return irrelevant_score

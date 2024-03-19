@@ -16,7 +16,9 @@ isort>=5.10
 pipreqs==0.4.11
 pre-commit>=2.20
 pytest-cov>=3
+transformers
 seaborn
 SciencePlots
 scikit-image
 codecov
+randomname

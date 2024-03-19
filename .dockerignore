@@ -7,9 +7,9 @@ models/*/*
 wandb
 wandb/*
 wandb/*/*
-notebooks
-notebooks/*
-notebooks/*/*
+examples
+examples/*
+examples/*/*
 tmp
 tmp/*
 profiler
