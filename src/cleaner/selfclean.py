@@ -63,7 +63,7 @@ DINO_STANDARD_HYPERPARAMETERS = {
 
 class PretrainingType(Enum):
     IMAGENET = "imagenet"
-    IMAGENET_VIT = "imagenet_vit"
+    IMAGENET_VIT = "imagenet_vit_tiny"
     DINO = "dino"
 
 
