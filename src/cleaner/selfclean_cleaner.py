@@ -6,7 +6,7 @@ from typing import Callable, Optional, Union
 import numpy as np
 import scienceplots  # noqa: F401
 import sklearn  # noqa: F401
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ..cleaner.auto_cleaning_mixin import AutoCleaningMixin
 from ..cleaner.base_cleaner import BaseCleaner
@@ -17,6 +17,7 @@ from ..cleaner.label_errors.intra_extra_distance_mixin import (
 from ..cleaner.near_duplicates.embedding_distance_mixin import EmbeddingDistanceMixin
 from ..distances import *  # noqa: F401, F403
 from ..distances.projective_distance import *  # noqa: F401, F403
+from ..ssl_library.src.utils.logging import set_log_level
 from ..utils.plotting import plot_inspection_result
 
 
@@ -42,8 +43,12 @@ class SelfCleanCleaner(
         plot_top_N: Optional[int] = None,
         output_path: Optional[str] = None,
         figsize: tuple = (10, 8),
+        # logging
+        log_level: str = "INFO",
         **kwargs,
     ):
+        set_log_level(min_log_level=log_level)
+
         self.memmap = memmap
         self.chunk_size = chunk_size
         self.precision_type_distance = precision_type_distance

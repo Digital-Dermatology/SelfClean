@@ -3,9 +3,10 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 import matplotlib.pyplot as plt
+from loguru import logger
 from matplotlib.patches import Rectangle
 from scipy.cluster import hierarchy
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 
 class LAD:
@@ -29,7 +30,6 @@ class LAD:
         linkage_matrix: list,
         global_leaves: bool = False,
         save_fig_path: Optional[str] = None,
-        debug: bool = False,
     ) -> List[Tuple[float, int]]:
         if self.plot_scores:
             plt.figure(figsize=(5, 5))
@@ -140,14 +140,13 @@ class LAD:
                         linestyle="dotted",
                     )
 
-                if debug:
-                    print(
-                        f"ID: {node.id}, #leaves: {n_leaves}, scores: {len(scores)}, "
-                        f"dist: {round(node.dist, 2)}, square: {round(square, 2)}, "
-                        f"start: {round(start, 2)}, end: {round(end, 2)}, "
-                        f"p_left: {round(p_left, 2)}, p_right: {round(p_right, 2)}, "
-                        f"w_left: {round(w_left, 2)}, w_right: {round(w_right, 2)}"
-                    )
+                logger.debug(
+                    f"ID: {node.id}, #leaves: {n_leaves}, scores: {len(scores)}, "
+                    f"dist: {round(node.dist, 2)}, square: {round(square, 2)}, "
+                    f"start: {round(start, 2)}, end: {round(end, 2)}, "
+                    f"p_left: {round(p_left, 2)}, p_right: {round(p_right, 2)}, "
+                    f"w_left: {round(w_left, 2)}, w_right: {round(w_right, 2)}"
+                )
 
                 node_right = NodeElement(
                     node=node.right,
@@ -167,12 +166,11 @@ class LAD:
                 )
                 queue.insert(0, node_left)
             else:
-                if debug:
-                    print(
-                        f"Leaf ({node.id}), "
-                        f"score: {round(sum(scores), 2)}, square: {round(square, 2)}, "
-                        f"start: {round(start, 2)}, end: {round(end, 2)}"
-                    )
+                logger.debug(
+                    f"Leaf ({node.id}), "
+                    f"score: {round(sum(scores), 2)}, square: {round(square, 2)}, "
+                    f"start: {round(start, 2)}, end: {round(end, 2)}"
+                )
 
                 if self.plot_scores:
                     plt.gca().text(

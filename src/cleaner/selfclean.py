@@ -14,6 +14,7 @@ from ..cleaner.selfclean_cleaner import SelfCleanCleaner
 from ..ssl_library.src.augmentations.ibot import iBOTDataAugmentation
 from ..ssl_library.src.pkg import Embedder, embed_dataset
 from ..ssl_library.src.trainers.dino_trainer import DINOTrainer
+from ..ssl_library.src.utils.logging import set_log_level
 from ..ssl_library.src.utils.utils import cleanup, init_distributed_mode
 from ..utils.utils import set_dataset_transformation
 
@@ -26,7 +27,8 @@ DINO_STANDARD_HYPERPARAMETERS = {
     "warmup_epochs": 10,
     "momentum_teacher": 0.996,
     "clip_grad": 3.0,
-    "apply_l2_norm": True,
+    "apply_l2_norm": False,  # TODO: check influence of this
+    "save_every_n_epochs": 10,
     "model": {
         "out_dim": 4096,
         "emb_dim": 192,
@@ -35,11 +37,11 @@ DINO_STANDARD_HYPERPARAMETERS = {
         "use_bn_in_head": False,
         "norm_last_layer": True,
         "student": {
-            "drop_path_rate": 0.1,
+            "drop_path_rate": 0.1,  # TODO: check influence of this
             "pretrained": True,
         },
         "teacher": {
-            "drop_path_rate": 0.1,
+            "drop_path_rate": 0.1,  # TODO: check influence of this
             "pretrained": True,
         },
         "eval": {"n_last_blocks": 4, "avgpool_patchtokens": False},
@@ -84,13 +86,14 @@ class SelfClean:
         plot_top_N: Optional[int] = None,
         output_path: Optional[str] = None,
         figsize: tuple = (10, 8),
+        # logging
+        log_level: str = "INFO",
         **kwargs,
     ):
+        set_log_level(min_log_level=log_level)
         self.memmap = memmap
         self.memmap_path = memmap_path
-
         self.model = None
-
         self.cleaner = SelfCleanCleaner(
             distance_function_path=distance_function_path,
             distance_function_name=distance_function_name,
@@ -102,9 +105,9 @@ class SelfClean:
             plot_top_N=plot_top_N,
             output_path=output_path,
             figsize=figsize,
+            log_level=log_level,
             **kwargs,
         )
-
         self.base_transform = transforms.Compose(
             [
                 transforms.Resize(256, interpolation=InterpolationMode.BICUBIC),
@@ -118,7 +121,7 @@ class SelfClean:
         self,
         input_path: Union[str, Path],
         epochs: int = 100,
-        batch_size: int = 32,
+        batch_size: int = 64,
         ssl_pre_training: bool = True,
         work_dir: Optional[str] = None,
         num_workers: int = 24,
@@ -158,7 +161,7 @@ class SelfClean:
         self,
         dataset,
         epochs: int = 100,
-        batch_size: int = 32,
+        batch_size: int = 64,
         ssl_pre_training: bool = True,
         work_dir: Optional[str] = None,
         num_workers: int = 24,
@@ -194,7 +197,7 @@ class SelfClean:
         self,
         dataset,
         epochs: int = 100,
-        batch_size: int = 32,
+        batch_size: int = 64,
         ssl_pre_training: bool = True,
         work_dir: Optional[str] = None,
         num_workers: int = 24,
@@ -244,6 +247,7 @@ class SelfClean:
             normalize=apply_l2_norm,
             memmap=self.memmap,
             memmap_path=self.memmap_path,
+            tqdm_desc="Creating dataset representation",
         )
         # for default datasets we can set the paths manually
         if hasattr(dataset, "_image_files") and paths is None:
@@ -262,7 +266,7 @@ class SelfClean:
         self,
         dataset: Dataset,
         epochs: int = 100,
-        batch_size: int = 32,
+        batch_size: int = 64,
         ssl_pre_training: bool = True,
         work_dir: Optional[str] = None,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,

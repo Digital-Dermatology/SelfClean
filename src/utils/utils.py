@@ -2,6 +2,7 @@ import math
 
 import numpy as np
 import torch
+from loguru import logger
 from torch.utils.data import ConcatDataset, Dataset
 
 
@@ -35,7 +36,7 @@ def actual_indices(idx, n):
     shifts = np.concatenate([[0], n_row_elems])
     jj = np.arange(1, n)[ii] + idx - shifts[ii]
     if np.sum(ii < 0) > 0 or np.sum(jj < 0) > 0:
-        print("Negative indices")
+        logger.error("Negative indices")
     return ii, jj
 
 

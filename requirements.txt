@@ -21,3 +21,5 @@ seaborn
 SciencePlots
 scikit-image
 codecov
+jupyter
+loguru

@@ -2,7 +2,7 @@ import math
 from typing import List, Tuple
 
 import numpy as np
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from ...cleaner.near_duplicates.base_near_duplicate_mixin import BaseNearDuplicateMixin
 from ...ssl_library.src.utils.logging import plot_dist

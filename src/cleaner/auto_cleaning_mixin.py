@@ -3,6 +3,7 @@ from typing import Optional
 import numpy as np
 import scipy
 import scipy.stats
+from loguru import logger
 
 from ..utils.plotting import (
     plot_frac_cut,
@@ -86,7 +87,6 @@ class AutoCleaningMixin:
         plot_result: bool = False,
         ax=None,
         bins="sqrt",
-        debug: bool = False,
         path: Optional[str] = None,
     ):
         M = len(scores)
@@ -113,8 +113,7 @@ class AutoCleaningMixin:
         # Exclude the scores below probability threshold
         exclude = logit_scores < cutoff
         n = exclude.sum()
-        if debug:
-            print(f"{n} outliers ({n/self.N:.1%})")
+        logger.debug(f"{n} outliers ({n/self.N:.1%})")
 
         if plot_result:
             if ax is not None:
@@ -155,7 +154,6 @@ class AutoCleaningMixin:
                         alpha=0.1,
                         q=q,
                         plot_result=False,
-                        debug=False,
                     ).shape[0],
                 )
                 for q in thresholds
@@ -187,7 +185,6 @@ class AutoCleaningMixin:
                         scores=scores,
                         alpha=a,
                         plot_result=False,
-                        debug=False,
                     ).shape[0],
                 )
                 for a in alphas

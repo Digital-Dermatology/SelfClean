@@ -56,7 +56,7 @@ class TestAutoCleaning(unittest.TestCase):
         cleaner = SelfCleanCleaner(
             memmap=False,
             auto_cleaning=True,
-            cleaner_kwargs={"debug": True, "plot_result": True},
+            cleaner_kwargs={"plot_result": True},
         )
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
