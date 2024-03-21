@@ -15,7 +15,11 @@ from ..ssl_library.src.augmentations.ibot import iBOTDataAugmentation
 from ..ssl_library.src.pkg import Embedder, embed_dataset
 from ..ssl_library.src.trainers.dino_trainer import DINOTrainer
 from ..ssl_library.src.utils.logging import set_log_level
-from ..ssl_library.src.utils.utils import cleanup, init_distributed_mode
+from ..ssl_library.src.utils.utils import (
+    cleanup,
+    fix_random_seeds,
+    init_distributed_mode,
+)
 from ..utils.utils import set_dataset_transformation
 
 DINO_STANDARD_HYPERPARAMETERS = {
@@ -86,11 +90,14 @@ class SelfClean:
         plot_top_N: Optional[int] = None,
         output_path: Optional[str] = None,
         figsize: tuple = (10, 8),
+        # utils
+        random_seed: int = 42,
         # logging
         log_level: str = "INFO",
         **kwargs,
     ):
         set_log_level(min_log_level=log_level)
+        fix_random_seeds(seed=random_seed)
         self.memmap = memmap
         self.memmap_path = memmap_path
         self.model = None

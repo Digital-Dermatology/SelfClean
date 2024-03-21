@@ -18,6 +18,7 @@ from ..cleaner.near_duplicates.embedding_distance_mixin import EmbeddingDistance
 from ..distances import *  # noqa: F401, F403
 from ..distances.projective_distance import *  # noqa: F401, F403
 from ..ssl_library.src.utils.logging import set_log_level
+from ..ssl_library.src.utils.utils import fix_random_seeds
 from ..utils.plotting import plot_inspection_result
 
 
@@ -43,11 +44,14 @@ class SelfCleanCleaner(
         plot_top_N: Optional[int] = None,
         output_path: Optional[str] = None,
         figsize: tuple = (10, 8),
+        # utils
+        random_seed: int = 42,
         # logging
         log_level: str = "INFO",
         **kwargs,
     ):
         set_log_level(min_log_level=log_level)
+        fix_random_seeds(seed=random_seed)
 
         self.memmap = memmap
         self.chunk_size = chunk_size
