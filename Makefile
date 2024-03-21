@@ -100,6 +100,9 @@ clean:  ##@Utils clean the project
 	@rm -f -R .idea
 	@rm -f -R tmp/
 	@rm -f -R cov_html/
+	@rm -f -R build/
+	@rm -f -R dist/
+	@rm -f -R selfclean.egg-info/
 
 ###########################
 # DOCKER
