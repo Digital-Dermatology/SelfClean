@@ -101,12 +101,6 @@ clean:  ##@Utils clean the project
 	@rm -f -R tmp/
 	@rm -f -R cov_html/
 
-_build_publish:
-	@python3 -m pip install --upgrade pip
-	@python3 -m pip install setuptools wheel twine
-	@python3 setup sdist bdist_wheel
-	@python3 -m twine upload --verbose dist/*
-
 ###########################
 # DOCKER
 ###########################
