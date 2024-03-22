@@ -31,7 +31,7 @@ setup(
     name=PACKAGE_NAME,
     packages=proj_packages,
     package_dir={PACKAGE_NAME: SOURCE_DIRECTORY},
-    version="0.0.14",
+    version="0.0.15",
     author="Fabian Groeger",
     author_email="fabian.groeger@unibas.ch",
     description="A holistic self-supervised data cleaning strategy to detect irrelevant samples, near duplicates and label errors.",

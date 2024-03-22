@@ -34,7 +34,6 @@ DINO_STANDARD_HYPERPARAMETERS = {
     "momentum_teacher": 0.996,
     "clip_grad": 3.0,
     "apply_l2_norm": True,
-    "save_every_n_epochs": 10,
     "model": {
         "out_dim": 4096,
         "emb_dim": 192,
