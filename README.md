@@ -2,9 +2,7 @@
 
 [**SelfClean Paper**](https://arxiv.org/abs/2305.17048) | [**Data Cleaning Protocol Paper**](https://arxiv.org/abs/2309.06961)
 
-<p align="center">
-  <img src="https://github.com/Digital-Dermatology/SelfClean/blob/main/assets/SelfClean_Teaser.png">
-</p>
+![SelfClean Teaser](https://github.com/Digital-Dermatology/SelfClean/raw/main/assets/SelfClean_Teaser.png)
 
 <h2 align="center">
 
