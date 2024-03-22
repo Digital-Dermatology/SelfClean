@@ -1,5 +1,5 @@
 import math
-from typing import List, Tuple
+from typing import Tuple
 
 import numpy as np
 from tqdm.auto import tqdm
@@ -10,7 +10,7 @@ from ...utils.utils import condensed_to_square
 
 
 class EmbeddingDistanceMixin(BaseNearDuplicateMixin):
-    def get_near_duplicate_ranking(self) -> List[Tuple[float, int]]:
+    def get_near_duplicate_ranking(self) -> Tuple[np.ndarray, np.ndarray]:
         if self.memmap:
             score_file = self.memmap_path / "near_duplicate_scores.dat"
             # make sure the files do not exist already
@@ -31,6 +31,8 @@ class EmbeddingDistanceMixin(BaseNearDuplicateMixin):
         # sort the values in the condensed matrix
         sorting = self.p_distances.argsort()
         scores_near_dup[:] = np.take(self.p_distances, indices=sorting, axis=0)
+        if self.memmap:
+            scores_near_dup.flush()
         # vectorize the mapping function
         vec_index_mapping = np.vectorize(condensed_to_square)
         # here the chunk size is x**2 since we have quadratically more
@@ -65,6 +67,8 @@ class EmbeddingDistanceMixin(BaseNearDuplicateMixin):
             # map the indices from the condensed to the redundant distance matrix
             mapping_row = np.asarray(vec_index_mapping(chunk_sorting, self.N)).T
             indices_near_dup[chunk_slice, :] = mapping_row
+            if self.memmap:
+                indices_near_dup.flush()
             del mapping_row
 
         if self.plot_distribution:
@@ -72,4 +76,4 @@ class EmbeddingDistanceMixin(BaseNearDuplicateMixin):
                 scores=scores_near_dup,
                 title="Distribution of near-duplicates",
             )
-        return list(zip(scores_near_dup, indices_near_dup))
+        return scores_near_dup, indices_near_dup

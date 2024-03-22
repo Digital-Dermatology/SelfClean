@@ -17,7 +17,7 @@ class TestNearDuplicateDistance(unittest.TestCase):
         self.assertTrue(
             (cleaner.distance_matrix == np.ones(shape=(50, 50)) * 0.5).all()
         )
-        self.assertTrue((out_dict["near_duplicates"]["scores"] == 0.5).all())
+        self.assertTrue((out_dict.get_issues("near_duplicates")["scores"] == 0.5).all())
 
     def test_exact_duplicate_distances(self):
         emb_space = np.random.rand(50, 198)
@@ -32,9 +32,12 @@ class TestNearDuplicateDistance(unittest.TestCase):
         out_dict = cleaner.predict()
 
         self.assertTrue(
-            (out_dict["near_duplicates"]["indices"][0] == [0, len(emb_space) - 1]).all()
+            (
+                out_dict.get_issues("near_duplicates")["indices"][0]
+                == [0, len(emb_space) - 1]
+            ).all()
         )
-        self.assertAlmostEqual(out_dict["near_duplicates"]["scores"][0], 0)
+        self.assertAlmostEqual(out_dict.get_issues("near_duplicates")["scores"][0], 0)
 
 
 if __name__ == "__main__":

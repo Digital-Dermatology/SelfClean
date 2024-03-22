@@ -14,10 +14,9 @@ class TestAutoCleaning(unittest.TestCase):
         cleaner = SelfCleanCleaner(memmap=False, auto_cleaning=False)
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
-        self.assertTrue("irrelevants" in out_dict)
-        self.assertTrue("near_duplicates" in out_dict)
-        self.assertTrue("label_errors" in out_dict)
-        for v in out_dict.values():
+        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
             self.assertTrue("scores" in v)
             self.assertTrue("auto_issues" not in v)
@@ -28,10 +27,9 @@ class TestAutoCleaning(unittest.TestCase):
         cleaner = SelfCleanCleaner(memmap=False, auto_cleaning=True)
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
-        self.assertTrue("irrelevants" in out_dict)
-        self.assertTrue("near_duplicates" in out_dict)
-        self.assertTrue("label_errors" in out_dict)
-        for v in out_dict.values():
+        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
             self.assertTrue("scores" in v)
             self.assertTrue("auto_issues" in v)
@@ -43,14 +41,13 @@ class TestAutoCleaning(unittest.TestCase):
         cleaner = SelfCleanCleaner(memmap=False, auto_cleaning=True)
         cleaner.fit(emb_space=self.emb_space)
         out_dict = cleaner.predict()
-        self.assertTrue("irrelevants" in out_dict)
-        self.assertTrue("near_duplicates" in out_dict)
-        self.assertTrue("label_errors" in out_dict)
-        for v in out_dict.values():
+        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
             self.assertTrue("scores" in v)
-        self.assertIsNone(out_dict["label_errors"]["indices"])
-        self.assertIsNone(out_dict["label_errors"]["scores"])
+        self.assertIsNone(out_dict.get_issues("label_errors")["indices"])
+        self.assertIsNone(out_dict.get_issues("label_errors")["scores"])
 
     def test_predict_auto_cleaning_with_plotting(self):
         cleaner = SelfCleanCleaner(
@@ -60,10 +57,9 @@ class TestAutoCleaning(unittest.TestCase):
         )
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
-        self.assertTrue("irrelevants" in out_dict)
-        self.assertTrue("near_duplicates" in out_dict)
-        self.assertTrue("label_errors" in out_dict)
-        for v in out_dict.values():
+        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
             self.assertTrue("scores" in v)
             self.assertTrue("auto_issues" in v)
@@ -87,7 +83,9 @@ class TestAutoCleaning(unittest.TestCase):
         cleaner.label_error_cut_off = 0.5
         out_dict2 = cleaner.predict()
 
-        for v1, v2 in zip(out_dict.values(), out_dict2.values()):
+        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+            v1 = out_dict.get_issues(issue_type)
+            v2 = out_dict2.get_issues(issue_type)
             self.assertTrue((v1["indices"] == v2["indices"]).all())
             self.assertTrue((v1["scores"] == v2["scores"]).all())
 
@@ -98,7 +96,7 @@ class TestAutoCleaning(unittest.TestCase):
         )
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
-        scores = out_dict["near_duplicates"]["scores"]
+        scores = out_dict.get_issues("near_duplicates")["scores"]
         cleaner.threshold_sensitivity(scores=scores)
 
     def test_alpha_sensitivity(self):
@@ -108,7 +106,7 @@ class TestAutoCleaning(unittest.TestCase):
         )
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
-        scores = out_dict["near_duplicates"]["scores"]
+        scores = out_dict.get_issues("near_duplicates")["scores"]
         cleaner.alpha_sensitivity(scores=scores)
 
 

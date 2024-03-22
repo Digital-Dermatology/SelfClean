@@ -1,4 +1,5 @@
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
 
 import numpy as np
 import scipy
@@ -36,7 +37,7 @@ class AutoCleaningMixin:
         pred_near_duplicate_scores: np.ndarray,
         pred_irrelevant_scores: np.ndarray,
         pred_label_error_scores: Optional[np.ndarray],
-        output_path: Optional[str] = None,
+        output_path: Optional[Union[str, Path]] = None,
     ):
         if self.auto_cleaning:
             # Near Duplicates

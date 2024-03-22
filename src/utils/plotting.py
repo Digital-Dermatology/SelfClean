@@ -3,6 +3,7 @@ from typing import Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+from torch.utils.data import Dataset
 from torchvision import transforms
 
 from ..ssl_library.src.utils.logging import create_subtitle, denormalize_image
@@ -11,19 +12,22 @@ from ..ssl_library.src.utils.logging import create_subtitle, denormalize_image
 def plot_inspection_result(
     pred_dups_indices: np.ndarray,
     pred_oods_indices: np.ndarray,
-    images: np.ndarray,
+    dataset: Dataset,
     plot_top_N: int,
     pred_lbl_errs_indices: Optional[np.ndarray] = None,
     labels: Optional[np.ndarray] = None,
-    class_labels: Optional[list] = None,
     output_path: Optional[Union[str, Path]] = None,
     figsize: tuple = (10, 8),
 ):
     rows = 4 if pred_lbl_errs_indices is not None else 3
     fig, ax = plt.subplots(rows, plot_top_N, figsize=figsize)
     for i, (idx1, idx2) in enumerate(pred_dups_indices[:plot_top_N]):
-        ax[0, i].imshow(transforms.ToPILImage()(denormalize_image(images[int(idx1)])))
-        ax[1, i].imshow(transforms.ToPILImage()(denormalize_image(images[int(idx2)])))
+        ax[0, i].imshow(
+            transforms.ToPILImage()(denormalize_image(dataset[int(idx1)][0]))
+        )
+        ax[1, i].imshow(
+            transforms.ToPILImage()(denormalize_image(dataset[int(idx2)][0]))
+        )
         ax[0, i].set_xticks([])
         ax[0, i].set_yticks([])
         ax[1, i].set_xticks([])
@@ -32,18 +36,18 @@ def plot_inspection_result(
         ax[1, i].set_title(f"Idx: {int(idx2)}", fontsize=6)
 
     for i, idx in enumerate(pred_oods_indices[:plot_top_N]):
-        ax[2, i].imshow(transforms.ToPILImage()(denormalize_image(images[int(idx)])))
+        ax[2, i].imshow(
+            transforms.ToPILImage()(denormalize_image(dataset[int(idx)][0]))
+        )
         ax[2, i].set_title(f"Ranking: {i+1}, Idx: {int(idx)}", fontsize=6)
         ax[2, i].set_xticks([])
         ax[2, i].set_yticks([])
 
     if pred_lbl_errs_indices is not None:
         for i, idx in enumerate(pred_lbl_errs_indices[:plot_top_N]):
-            class_label = get_label_from_index(
-                index=idx, labels=labels, class_labels=class_labels
-            )
+            class_label = labels[idx] if labels is not None else None
             ax[3, i].imshow(
-                transforms.ToPILImage()(denormalize_image(images[int(idx)]))
+                transforms.ToPILImage()(denormalize_image(dataset[int(idx)][0]))
             )
             ax[3, i].set_title(
                 f"Ranking: {i+1}\nIdx: {int(idx)}\nLbl: {class_label}",
@@ -61,20 +65,6 @@ def plot_inspection_result(
     if output_path is not None:
         plt.savefig(output_path, bbox_inches="tight")
     plt.show()
-
-
-def get_label_from_index(
-    index: int,
-    labels: Optional[np.ndarray] = None,
-    class_labels: Optional[list] = None,
-):
-    index = int(index)
-    if class_labels is not None and labels is not None:
-        return class_labels[labels[index]]
-    elif labels is not None:
-        return labels[index]
-    else:
-        return index
 
 
 def plot_frac_cut(dist, logit_scores, bins, q1, q2, cutoff, loc, scale, path):

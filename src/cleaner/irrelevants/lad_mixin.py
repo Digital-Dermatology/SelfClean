@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Tuple
 
 import numpy as np
 from scipy.cluster.hierarchy import single
@@ -13,20 +13,22 @@ class LADIrrelevantMixin(BaseIrrelevantMixin):
         super().__init__(**kwargs)
         self.global_leaves = global_leaves
 
-    def get_irrelevant_ranking(self) -> List[Tuple[float, int]]:
+    def get_irrelevant_ranking(self) -> Tuple[np.ndarray, np.ndarray]:
         # linkage_matrix: [idx1, idx2, dist, sample_count]
         linkage_matrix = single(self.p_distances)
         lad = LAD()
-        irrelevant_score = lad.calc_scores(
+        irrelevants = lad.calc_scores(
             linkage_matrix=linkage_matrix,
             global_leaves=self.global_leaves,
         )
         # free up allocated memory
         del lad, linkage_matrix
 
-        if self.plot_distribution and irrelevant_score is not None:
+        if self.plot_distribution and irrelevants is not None:
             plot_dist(
-                scores=np.asarray([x[0] for x in irrelevant_score]),
+                scores=np.asarray([x[0] for x in irrelevants]),
                 title="Distribution of irrelevant samples",
             )
-        return irrelevant_score
+        irrelevant_scores = np.asarray([x[0] for x in irrelevants])
+        irrelevant_indices = np.asarray([x[1] for x in irrelevants])
+        return irrelevant_scores, irrelevant_indices

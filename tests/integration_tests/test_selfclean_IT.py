@@ -30,14 +30,7 @@ class TestSelfCleanIT(unittest.TestCase):
             epochs=1,
             num_workers=4,
         )
-        self.assertTrue("irrelevants" in out_dict)
-        self.assertTrue("near_duplicates" in out_dict)
-        self.assertTrue("label_errors" in out_dict)
-        for v in out_dict.values():
-            self.assertTrue("indices" in v)
-            self.assertTrue("scores" in v)
-            self.assertIsNotNone(v["indices"])
-            self.assertIsNotNone(v["scores"])
+        self._check_output(out_dict)
 
     def test_run_with_files_dino_wo_pretraining(self):
         selfclean = SelfClean()
@@ -47,14 +40,7 @@ class TestSelfCleanIT(unittest.TestCase):
             ssl_pre_training=False,
             num_workers=4,
         )
-        self.assertTrue("irrelevants" in out_dict)
-        self.assertTrue("near_duplicates" in out_dict)
-        self.assertTrue("label_errors" in out_dict)
-        for v in out_dict.values():
-            self.assertTrue("indices" in v)
-            self.assertTrue("scores" in v)
-            self.assertIsNotNone(v["indices"])
-            self.assertIsNotNone(v["scores"])
+        self._check_output(out_dict)
 
     def test_run_with_files_dino(self):
         selfclean = SelfClean()
@@ -64,14 +50,7 @@ class TestSelfCleanIT(unittest.TestCase):
             epochs=1,
             num_workers=4,
         )
-        self.assertTrue("irrelevants" in out_dict)
-        self.assertTrue("near_duplicates" in out_dict)
-        self.assertTrue("label_errors" in out_dict)
-        for v in out_dict.values():
-            self.assertTrue("indices" in v)
-            self.assertTrue("scores" in v)
-            self.assertIsNotNone(v["indices"])
-            self.assertIsNotNone(v["scores"])
+        self._check_output(out_dict)
 
     def test_run_with_files_imagenet(self):
         selfclean = SelfClean()
@@ -80,14 +59,7 @@ class TestSelfCleanIT(unittest.TestCase):
             pretraining_type=PretrainingType.IMAGENET,
             num_workers=4,
         )
-        self.assertTrue("irrelevants" in out_dict)
-        self.assertTrue("near_duplicates" in out_dict)
-        self.assertTrue("label_errors" in out_dict)
-        for v in out_dict.values():
-            self.assertTrue("indices" in v)
-            self.assertTrue("scores" in v)
-            self.assertIsNotNone(v["indices"])
-            self.assertIsNotNone(v["scores"])
+        self._check_output(out_dict)
 
     def test_run_with_files_imagenet_vit(self):
         selfclean = SelfClean()
@@ -97,14 +69,7 @@ class TestSelfCleanIT(unittest.TestCase):
             epochs=1,
             num_workers=4,
         )
-        self.assertTrue("irrelevants" in out_dict)
-        self.assertTrue("near_duplicates" in out_dict)
-        self.assertTrue("label_errors" in out_dict)
-        for v in out_dict.values():
-            self.assertTrue("indices" in v)
-            self.assertTrue("scores" in v)
-            self.assertIsNotNone(v["indices"])
-            self.assertIsNotNone(v["scores"])
+        self._check_output(out_dict)
 
     def test_run_with_dataset(self):
         fake_dataset = FakeData(size=20)
@@ -114,10 +79,12 @@ class TestSelfCleanIT(unittest.TestCase):
             epochs=1,
             num_workers=4,
         )
-        self.assertTrue("irrelevants" in out_dict)
-        self.assertTrue("near_duplicates" in out_dict)
-        self.assertTrue("label_errors" in out_dict)
-        for v in out_dict.values():
+        self._check_output(out_dict)
+
+    def _check_output(self, out_dict):
+        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
             self.assertTrue("scores" in v)
             self.assertIsNotNone(v["indices"])

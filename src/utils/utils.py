@@ -40,7 +40,7 @@ def actual_indices(idx, n):
     return ii, jj
 
 
-def has_same_label(arr):
+def has_same_label(arr) -> np.ndarray:
     arr = np.array(arr)
     result = arr[:, None] == arr
     return result

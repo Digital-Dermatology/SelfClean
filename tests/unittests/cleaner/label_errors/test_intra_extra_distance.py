@@ -40,10 +40,10 @@ class TestLabelErrorIntraExtraDistance(unittest.TestCase):
         out_dict = cleaner.predict()
 
         np.testing.assert_array_equal(
-            np.sort(out_dict["label_errors"]["indices"][:2]),
+            np.sort(out_dict.get_issues("label_errors")["indices"][:2]),
             np.sort(np.asarray([0, len(emb_space) - 1])),
         )
-        self.assertAlmostEqual(out_dict["label_errors"]["scores"][0], 0)
+        self.assertAlmostEqual(out_dict.get_issues("label_errors")["scores"][0], 0)
 
 
 if __name__ == "__main__":

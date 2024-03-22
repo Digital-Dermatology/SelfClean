@@ -31,7 +31,7 @@ DINO_STANDARD_HYPERPARAMETERS = {
     "warmup_epochs": 10,
     "momentum_teacher": 0.996,
     "clip_grad": 3.0,
-    "apply_l2_norm": False,  # TODO: check influence of this
+    "apply_l2_norm": True,
     "save_every_n_epochs": 10,
     "model": {
         "out_dim": 4096,
@@ -41,11 +41,11 @@ DINO_STANDARD_HYPERPARAMETERS = {
         "use_bn_in_head": False,
         "norm_last_layer": True,
         "student": {
-            "drop_path_rate": 0.1,  # TODO: check influence of this
+            "drop_path_rate": 0.1,
             "pretrained": True,
         },
         "teacher": {
-            "drop_path_rate": 0.1,  # TODO: check influence of this
+            "drop_path_rate": 0.1,
             "pretrained": True,
         },
         "eval": {"n_last_blocks": 4, "avgpool_patchtokens": False},
@@ -247,7 +247,7 @@ class SelfClean:
             drop_last=False,
             shuffle=False,
         )
-        emb_space, labels, images, paths = embed_dataset(
+        emb_space, labels = embed_dataset(
             torch_dataset=torch_dataset,
             model=self.model,
             n_layers=n_layers,
@@ -255,16 +255,18 @@ class SelfClean:
             memmap=self.memmap,
             memmap_path=self.memmap_path,
             tqdm_desc="Creating dataset representation",
+            return_only_embedding_and_labels=True,
         )
         # for default datasets we can set the paths manually
+        paths = None
         if hasattr(dataset, "_image_files") and paths is None:
             paths = dataset._image_files
 
         self.cleaner.fit(
             emb_space=np.asarray(emb_space),
-            images=np.asarray(images),
             labels=np.asarray(labels),
             paths=np.asarray(paths) if paths is not None else paths,
+            dataset=dataset,
             class_labels=dataset.classes if hasattr(dataset, "classes") else None,
         )
         return self.cleaner.predict()

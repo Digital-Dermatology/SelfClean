@@ -14,7 +14,9 @@ class TestIrrelevantsLADScoring(unittest.TestCase):
         cleaner.fit(emb_space=emb_space)
         out_dict = cleaner.predict()
 
-        self.assertEqual(out_dict["irrelevants"]["indices"][0], len(emb_space) - 1)
+        self.assertEqual(
+            out_dict.get_issues("irrelevants")["indices"][0], len(emb_space) - 1
+        )
 
 
 if __name__ == "__main__":

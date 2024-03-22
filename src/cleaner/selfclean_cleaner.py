@@ -6,11 +6,13 @@ from typing import Callable, Optional, Union
 import numpy as np
 import scienceplots  # noqa: F401
 import sklearn  # noqa: F401
+from torch.utils.data import Dataset
 from tqdm.auto import tqdm
 
 from ..cleaner.auto_cleaning_mixin import AutoCleaningMixin
 from ..cleaner.base_cleaner import BaseCleaner
 from ..cleaner.irrelevants.lad_mixin import LADIrrelevantMixin
+from ..cleaner.issue_manager import IssueManager
 from ..cleaner.label_errors.intra_extra_distance_mixin import (
     IntraExtraDistanceLabelErrorMixin,
 )
@@ -81,12 +83,12 @@ class SelfCleanCleaner(
         self,
         emb_space: np.ndarray,
         labels: Optional[np.ndarray] = None,
-        images: Optional[np.ndarray] = None,
         paths: Optional[np.ndarray] = None,
+        dataset: Optional[Dataset] = None,
         class_labels: Optional[list] = None,
     ):
         self.labels = labels
-        self.images = images
+        self.dataset = dataset
         self.paths = paths
         self.class_labels = class_labels
         self.N, self.D = emb_space.shape
@@ -153,39 +155,34 @@ class SelfCleanCleaner(
         ]
         return self
 
-    def predict(self) -> dict:
-        pred_nd = self.get_near_duplicate_ranking()
-        pred_nd_scores = np.asarray([x[0] for x in pred_nd])
-        pred_nd_indices = np.asarray([x[1] for x in pred_nd])
-        del pred_nd
+    def predict(self) -> IssueManager:
+        pred_nd_scores, pred_nd_indices = self.get_near_duplicate_ranking()
+        pred_oods_scores, pred_oods_indices = self.get_irrelevant_ranking()
+        pred_lbl_errs_scores, pred_lbl_errs_indices = self.get_label_error_ranking()
 
-        pred_oods = self.get_irrelevant_ranking()
-        pred_oods_scores = np.asarray([x[0] for x in pred_oods])
-        pred_oods_indices = np.asarray([x[1] for x in pred_oods])
-        del pred_oods
+        # transform labels using class names if given
+        if self.labels is not None:
+            self.labels = [
+                self.class_labels[x] if self.class_labels is not None else x
+                for x in self.labels
+            ]
 
-        pred_lbl_errs = self.get_label_error_ranking()
-        if pred_lbl_errs is not None:
-            pred_lbl_errs_scores = np.asarray([x[0] for x in pred_lbl_errs])
-            pred_lbl_errs_indices = np.asarray([x[1] for x in pred_lbl_errs])
-        else:
-            pred_lbl_errs_scores = None
-            pred_lbl_errs_indices = None
-        del pred_lbl_errs
-
-        if self.plot_top_N is not None and self.images is not None:
+        if self.plot_top_N is not None and self.dataset is not None:
             plot_inspection_result(
                 pred_dups_indices=pred_nd_indices,
                 pred_oods_indices=pred_oods_indices,
                 pred_lbl_errs_indices=pred_lbl_errs_indices,
-                images=self.images,
+                dataset=self.dataset,
                 labels=self.labels,
-                class_labels=self.class_labels,
                 plot_top_N=self.plot_top_N,
                 output_path=self.output_path,
                 figsize=self.figsize,
             )
 
+        meta_data_dict = {
+            "path": self.paths,
+            "label": self.labels,
+        }
         return_dict = {
             "irrelevants": {
                 "indices": pred_oods_indices,
@@ -200,7 +197,6 @@ class SelfCleanCleaner(
                 "scores": pred_lbl_errs_scores,
             },
         }
-
         return_dict = self.perform_auto_cleaning(
             return_dict=return_dict,
             pred_near_duplicate_scores=pred_nd_scores,
@@ -208,4 +204,4 @@ class SelfCleanCleaner(
             pred_label_error_scores=pred_lbl_errs_scores,
             output_path=self.output_path,
         )
-        return return_dict
+        return IssueManager(issue_dict=return_dict, meta_data_dict=meta_data_dict)

@@ -10,6 +10,7 @@ class TestSelfCleanCleaner(unittest.TestCase):
     def setUp(self):
         self.emb_space = np.random.rand(50, 198)
         self.labels = np.random.randint(5, size=50)
+        self.class_labels = [f"test_{x}" for x in np.unique(self.labels)]
 
     def test_fit(self):
         cleaner = SelfCleanCleaner(memmap=False)
@@ -28,10 +29,26 @@ class TestSelfCleanCleaner(unittest.TestCase):
         cleaner = SelfCleanCleaner(memmap=False)
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
-        self.assertTrue("irrelevants" in out_dict)
-        self.assertTrue("near_duplicates" in out_dict)
-        self.assertTrue("label_errors" in out_dict)
-        for v in out_dict.values():
+        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNotNone(v)
+            self.assertTrue("indices" in v)
+            self.assertTrue("scores" in v)
+            self.assertIsNotNone(v["indices"])
+            self.assertIsNotNone(v["scores"])
+            self.assertEqual(len(v["indices"]), len(v["scores"]))
+
+    def test_predict_with_class_labels(self):
+        cleaner = SelfCleanCleaner(memmap=False)
+        cleaner.fit(
+            emb_space=self.emb_space,
+            labels=self.labels,
+            class_labels=self.class_labels,
+        )
+        out_dict = cleaner.predict()
+        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
             self.assertTrue("scores" in v)
             self.assertIsNotNone(v["indices"])
@@ -46,10 +63,9 @@ class TestSelfCleanCleaner(unittest.TestCase):
         )
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
-        self.assertTrue("irrelevants" in out_dict)
-        self.assertTrue("near_duplicates" in out_dict)
-        self.assertTrue("label_errors" in out_dict)
-        for v in out_dict.values():
+        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
             self.assertTrue("scores" in v)
             self.assertIsNotNone(v["indices"])
@@ -59,14 +75,13 @@ class TestSelfCleanCleaner(unittest.TestCase):
         cleaner = SelfCleanCleaner(memmap=False)
         cleaner.fit(emb_space=self.emb_space)
         out_dict = cleaner.predict()
-        self.assertTrue("irrelevants" in out_dict)
-        self.assertTrue("near_duplicates" in out_dict)
-        self.assertTrue("label_errors" in out_dict)
-        for v in out_dict.values():
+        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
             self.assertTrue("scores" in v)
-        self.assertIsNone(out_dict["label_errors"]["indices"])
-        self.assertIsNone(out_dict["label_errors"]["scores"])
+        self.assertIsNone(out_dict.get_issues("label_errors")["indices"])
+        self.assertIsNone(out_dict.get_issues("label_errors")["scores"])
 
     def test_predict_distance_function(self):
         cleaner = SelfCleanCleaner(
@@ -76,10 +91,9 @@ class TestSelfCleanCleaner(unittest.TestCase):
         )
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
-        self.assertTrue("irrelevants" in out_dict)
-        self.assertTrue("near_duplicates" in out_dict)
-        self.assertTrue("label_errors" in out_dict)
-        for v in out_dict.values():
+        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
             self.assertTrue("scores" in v)
             self.assertIsNotNone(v["indices"])
