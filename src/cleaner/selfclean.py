@@ -1,4 +1,5 @@
 import gc
+import os
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Union
@@ -131,7 +132,7 @@ class SelfClean:
         batch_size: int = 64,
         ssl_pre_training: bool = True,
         work_dir: Optional[str] = None,
-        num_workers: int = 24,
+        num_workers: int = os.cpu_count(),
         pretraining_type: PretrainingType = PretrainingType.DINO,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         # embedding
@@ -171,7 +172,7 @@ class SelfClean:
         batch_size: int = 64,
         ssl_pre_training: bool = True,
         work_dir: Optional[str] = None,
-        num_workers: int = 24,
+        num_workers: int = os.cpu_count(),
         pretraining_type: PretrainingType = PretrainingType.DINO,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         # embedding
@@ -207,7 +208,7 @@ class SelfClean:
         batch_size: int = 64,
         ssl_pre_training: bool = True,
         work_dir: Optional[str] = None,
-        num_workers: int = 24,
+        num_workers: int = os.cpu_count(),
         pretraining_type: PretrainingType = PretrainingType.DINO,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         # embedding
@@ -279,7 +280,7 @@ class SelfClean:
         ssl_pre_training: bool = True,
         work_dir: Optional[str] = None,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
-        num_workers: int = 24,
+        num_workers: int = os.cpu_count(),
         # logging
         additional_run_info: str = "",
         wandb_logging: bool = False,
