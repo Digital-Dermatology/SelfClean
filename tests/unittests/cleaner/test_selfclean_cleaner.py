@@ -38,6 +38,20 @@ class TestSelfCleanCleaner(unittest.TestCase):
             self.assertIsNotNone(v["scores"])
             self.assertEqual(len(v["indices"]), len(v["scores"]))
 
+    def test_2_predict(self):
+        cleaner = SelfCleanCleaner(memmap=False)
+        cleaner.fit(emb_space=self.emb_space, labels=self.labels)
+        out_dict = cleaner.predict()
+        out_dict = cleaner.predict()
+        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNotNone(v)
+            self.assertTrue("indices" in v)
+            self.assertTrue("scores" in v)
+            self.assertIsNotNone(v["indices"])
+            self.assertIsNotNone(v["scores"])
+            self.assertEqual(len(v["indices"]), len(v["scores"]))
+
     def test_predict_with_class_labels(self):
         cleaner = SelfCleanCleaner(memmap=False)
         cleaner.fit(
