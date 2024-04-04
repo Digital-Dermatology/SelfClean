@@ -77,6 +77,7 @@ class SelfCleanCleaner(
         self.plot_distribution = plot_distribution
         self.plot_top_N = plot_top_N
         self.figsize = figsize
+        self.is_fitted = False
         super().__init__(**kwargs)
 
     def fit(
@@ -153,27 +154,30 @@ class SelfCleanCleaner(
         self.p_distances[:] = self.distance_matrix[
             ~np.tril(np.ones((self.N, self.N), dtype=bool))
         ]
+        self.is_fitted = True
         return self
 
     def predict(self) -> IssueManager:
         pred_nd_scores, pred_nd_indices = self.get_near_duplicate_ranking()
-        pred_oods_scores, pred_oods_indices = self.get_irrelevant_ranking()
+        pred_irr_scores, pred_irr_indices = self.get_irrelevant_ranking()
         pred_lbl_errs_scores, pred_lbl_errs_indices = self.get_label_error_ranking()
 
-        # transform labels using class names if given
         if self.labels is not None:
-            self.labels = [
+            # transform labels using class names if given
+            labels = [
                 self.class_labels[x] if self.class_labels is not None else x
                 for x in self.labels
             ]
+        else:
+            labels = self.labels
 
         if self.plot_top_N is not None and self.dataset is not None:
             plot_inspection_result(
-                pred_dups_indices=pred_nd_indices,
-                pred_oods_indices=pred_oods_indices,
+                pred_dup_indices=pred_nd_indices,
+                pred_irr_indices=pred_irr_indices,
                 pred_lbl_errs_indices=pred_lbl_errs_indices,
                 dataset=self.dataset,
-                labels=self.labels,
+                labels=labels,
                 plot_top_N=self.plot_top_N,
                 output_path=self.output_path,
                 figsize=self.figsize,
@@ -181,12 +185,12 @@ class SelfCleanCleaner(
 
         meta_data_dict = {
             "path": self.paths,
-            "label": self.labels,
+            "label": labels,
         }
         return_dict = {
             "irrelevants": {
-                "indices": pred_oods_indices,
-                "scores": pred_oods_scores,
+                "indices": pred_irr_indices,
+                "scores": pred_irr_scores,
             },
             "near_duplicates": {
                 "indices": pred_nd_indices,
@@ -200,7 +204,7 @@ class SelfCleanCleaner(
         return_dict = self.perform_auto_cleaning(
             return_dict=return_dict,
             pred_near_duplicate_scores=pred_nd_scores,
-            pred_irrelevant_scores=pred_oods_scores,
+            pred_irrelevant_scores=pred_irr_scores,
             pred_label_error_scores=pred_lbl_errs_scores,
             output_path=self.output_path,
         )

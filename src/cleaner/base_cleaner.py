@@ -4,6 +4,8 @@ from typing import Optional
 import numpy as np
 from torch.utils.data import Dataset
 
+from ..cleaner.issue_manager import IssueManager
+
 
 class BaseCleaner(ABC):
     @abstractmethod
@@ -18,5 +20,5 @@ class BaseCleaner(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def predict(self) -> dict:
+    def predict(self) -> IssueManager:
         raise NotImplementedError()

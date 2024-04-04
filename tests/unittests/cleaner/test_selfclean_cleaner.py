@@ -14,7 +14,9 @@ class TestSelfCleanCleaner(unittest.TestCase):
 
     def test_fit(self):
         cleaner = SelfCleanCleaner(memmap=False)
+        self.assertEqual(cleaner.is_fitted, False)
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
+        self.assertEqual(cleaner.is_fitted, True)
         self.assertIsInstance(cleaner, BaseCleaner)
         self.assertIsNotNone(cleaner.distance_matrix)
         self.assertIsNotNone(cleaner.p_distances)

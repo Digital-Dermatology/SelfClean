@@ -4,20 +4,56 @@
 
 ![SelfClean Teaser](https://github.com/Digital-Dermatology/SelfClean/raw/main/assets/SelfClean_Teaser.png)
 
-<h2 align="center">
-
-[![PyPI version](https://badge.fury.io/py/selfclean.svg)](https://badge.fury.io/py/selfclean)
-![Contribotion](https://img.shields.io/badge/Contribution-Welcome-brightgreen)
-
-</h2>
-
 A holistic self-supervised data cleaning strategy to detect irrelevant samples, near duplicates, and label errors.
+
+**NOTE:** Make sure to have `git-lfs` installed before pulling the repository to ensure the pre-trained models are pulled correctly ([git-lfs install instructions](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage)).
+
+## Installation
+
+> Install SelfClean via [PyPI](https://pypi.org/project/selfclean/):
+
+```python
+# upgrade pip to its latest version
+pip install -U pip
+
+# install selfclean
+pip install selfclean
+
+# Alternatively, use explicit python version (XX)
+python3.XX -m pip install selfclean
+```
+
+## Getting Started
+
+You can run SelfClean in a few lines of code:
+
+```python
+from selfclean import SelfClean
+
+selfclean = SelfClean()
+
+# run on pytorch dataset
+issues = selfclean.run_on_dataset(
+    dataset=copy.copy(dataset),
+)
+# run on image folder
+issues = selfclean.run_on_image_folder(
+    input_path="path/to/images",
+)
+
+# get the data quality issue rankings
+df_near_duplicates = issues.get_issues("near_duplicates", return_as_df=True)
+df_irrelevants = issues.get_issues("irrelevants", return_as_df=True)
+df_label_errors = issues.get_issues("label_errors", return_as_df=True)
+```
+
+**Examples:**
+In `examples/` we've provided some example notebooks showcasing the usage of SelfClean.
 
 ## Development Environment
 Run `make` for a list of possible targets.
 
-### Installation
-Run these commands to install the project:
+Run these commands to install the requirements for the development environment:
 ```bash
 make init
 make install
@@ -28,7 +64,7 @@ To run linters on all files:
 pre-commit run --all-files
 ```
 
-### Code and test conventions
+We use the following packages for code and test conventions:
 - `black` for code style
 - `isort` for import sorting
 - `pytest` for running tests

@@ -3,6 +3,7 @@ import re
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 
 from torchvision.datasets import FakeData
 
@@ -23,6 +24,18 @@ class TestSelfCleanIT(unittest.TestCase):
     def test_run_with_files_dino_in_workdir(self):
         temp_work_dir = tempfile.TemporaryDirectory()
         selfclean = SelfClean()
+        out_dict = selfclean.run_on_image_folder(
+            input_path=testfiles_path,
+            pretraining_type=PretrainingType.DINO,
+            work_dir=temp_work_dir.name,
+            epochs=1,
+            num_workers=4,
+        )
+        self._check_output(out_dict)
+
+    def test_run_with_files_dino_with_output_path(self):
+        temp_work_dir = tempfile.TemporaryDirectory()
+        selfclean = SelfClean(output_path=str(Path(temp_work_dir.name) / "output"))
         out_dict = selfclean.run_on_image_folder(
             input_path=testfiles_path,
             pretraining_type=PretrainingType.DINO,

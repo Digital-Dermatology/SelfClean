@@ -37,7 +37,7 @@ DINO_STANDARD_HYPERPARAMETERS = {
     "model": {
         "out_dim": 4096,
         "emb_dim": 192,
-        "base_model": "pretrained_imagenet_vit_tiny",
+        "base_model": "pretrained_imagenet_dino",
         "model_type": "VIT",
         "use_bn_in_head": False,
         "norm_last_layer": True,
@@ -131,7 +131,7 @@ class SelfClean:
         ssl_pre_training: bool = True,
         save_every_n_epochs: int = 10,
         work_dir: Optional[str] = None,
-        num_workers: int = os.cpu_count(),
+        num_workers: Optional[int] = os.cpu_count(),
         pretraining_type: PretrainingType = PretrainingType.DINO,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         # embedding
@@ -168,12 +168,12 @@ class SelfClean:
     def run_on_dataset(
         self,
         dataset,
-        epochs: int = 100,
+        epochs: int = 10,
         batch_size: int = 64,
         ssl_pre_training: bool = True,
         save_every_n_epochs: int = 10,
         work_dir: Optional[str] = None,
-        num_workers: int = os.cpu_count(),
+        num_workers: Optional[int] = os.cpu_count(),
         pretraining_type: PretrainingType = PretrainingType.DINO,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         # embedding
@@ -211,7 +211,7 @@ class SelfClean:
         ssl_pre_training: bool = True,
         save_every_n_epochs: int = 10,
         work_dir: Optional[str] = None,
-        num_workers: int = os.cpu_count(),
+        num_workers: Optional[int] = os.cpu_count(),
         pretraining_type: PretrainingType = PretrainingType.DINO,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         # embedding
@@ -222,58 +222,59 @@ class SelfClean:
         wandb_logging: bool = False,
         wandb_project_name: str = "SelfClean",
     ):
-        if self.model is None:
-            if pretraining_type is PretrainingType.DINO:
-                self.model = self.train_dino(
-                    dataset=dataset,
-                    epochs=epochs,
-                    batch_size=batch_size,
-                    ssl_pre_training=ssl_pre_training,
-                    save_every_n_epochs=save_every_n_epochs,
-                    work_dir=work_dir,
-                    hyperparameters=hyperparameters,
-                    num_workers=num_workers,
-                    additional_run_info=additional_run_info,
-                    wandb_logging=wandb_logging,
-                    wandb_project_name=wandb_project_name,
-                )
-            elif (
-                pretraining_type is PretrainingType.IMAGENET
-                or pretraining_type is PretrainingType.IMAGENET_VIT
-            ):
-                self.model = Embedder.load_pretrained(pretraining_type.value)
-            else:
-                raise ValueError(f"Unknown pretraining type: {pretraining_type}")
+        if not self.cleaner.is_fitted:
+            if self.model is None:
+                if pretraining_type is PretrainingType.DINO:
+                    self.model = self.train_dino(
+                        dataset=dataset,
+                        epochs=epochs,
+                        batch_size=batch_size,
+                        ssl_pre_training=ssl_pre_training,
+                        save_every_n_epochs=save_every_n_epochs,
+                        work_dir=work_dir,
+                        hyperparameters=hyperparameters,
+                        num_workers=num_workers,
+                        additional_run_info=additional_run_info,
+                        wandb_logging=wandb_logging,
+                        wandb_project_name=wandb_project_name,
+                    )
+                elif (
+                    pretraining_type is PretrainingType.IMAGENET
+                    or pretraining_type is PretrainingType.IMAGENET_VIT
+                ):
+                    self.model = Embedder.load_pretrained(pretraining_type.value)
+                else:
+                    raise ValueError(f"Unknown pretraining type: {pretraining_type}")
 
-        set_dataset_transformation(dataset=dataset, transform=self.base_transform)
-        torch_dataset = DataLoader(
-            dataset,
-            batch_size=batch_size,
-            drop_last=False,
-            shuffle=False,
-        )
-        emb_space, labels = embed_dataset(
-            torch_dataset=torch_dataset,
-            model=self.model,
-            n_layers=n_layers,
-            normalize=apply_l2_norm,
-            memmap=self.memmap,
-            memmap_path=self.memmap_path,
-            tqdm_desc="Creating dataset representation",
-            return_only_embedding_and_labels=True,
-        )
-        # for default datasets we can set the paths manually
-        paths = None
-        if hasattr(dataset, "_image_files") and paths is None:
-            paths = dataset._image_files
+            set_dataset_transformation(dataset=dataset, transform=self.base_transform)
+            torch_dataset = DataLoader(
+                dataset,
+                batch_size=batch_size,
+                drop_last=False,
+                shuffle=False,
+            )
+            emb_space, labels = embed_dataset(
+                torch_dataset=torch_dataset,
+                model=self.model,
+                n_layers=n_layers,
+                normalize=apply_l2_norm,
+                memmap=self.memmap,
+                memmap_path=self.memmap_path,
+                tqdm_desc="Creating dataset representation",
+                return_only_embedding_and_labels=True,
+            )
+            # for default datasets we can set the paths manually
+            paths = None
+            if hasattr(dataset, "_image_files") and paths is None:
+                paths = dataset._image_files
 
-        self.cleaner.fit(
-            emb_space=np.asarray(emb_space),
-            labels=np.asarray(labels),
-            paths=np.asarray(paths) if paths is not None else paths,
-            dataset=dataset,
-            class_labels=dataset.classes if hasattr(dataset, "classes") else None,
-        )
+            self.cleaner.fit(
+                emb_space=np.asarray(emb_space),
+                labels=np.asarray(labels),
+                paths=np.asarray(paths) if paths is not None else paths,
+                dataset=dataset,
+                class_labels=dataset.classes if hasattr(dataset, "classes") else None,
+            )
         return self.cleaner.predict()
 
     def train_dino(
@@ -285,7 +286,7 @@ class SelfClean:
         save_every_n_epochs: int = 10,
         work_dir: Optional[str] = None,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
-        num_workers: int = os.cpu_count(),
+        num_workers: Optional[int] = os.cpu_count(),
         # logging
         additional_run_info: str = "",
         wandb_logging: bool = False,

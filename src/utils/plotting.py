@@ -10,18 +10,18 @@ from ..ssl_library.src.utils.logging import create_subtitle, denormalize_image
 
 
 def plot_inspection_result(
-    pred_dups_indices: np.ndarray,
-    pred_oods_indices: np.ndarray,
+    pred_dup_indices: np.ndarray,
+    pred_irr_indices: np.ndarray,
     dataset: Dataset,
     plot_top_N: int,
     pred_lbl_errs_indices: Optional[np.ndarray] = None,
-    labels: Optional[np.ndarray] = None,
+    labels: Optional[Union[np.ndarray, list]] = None,
     output_path: Optional[Union[str, Path]] = None,
     figsize: tuple = (10, 8),
 ):
     rows = 4 if pred_lbl_errs_indices is not None else 3
     fig, ax = plt.subplots(rows, plot_top_N, figsize=figsize)
-    for i, (idx1, idx2) in enumerate(pred_dups_indices[:plot_top_N]):
+    for i, (idx1, idx2) in enumerate(pred_dup_indices[:plot_top_N]):
         ax[0, i].imshow(
             transforms.ToPILImage()(denormalize_image(dataset[int(idx1)][0]))
         )
@@ -35,7 +35,7 @@ def plot_inspection_result(
         ax[0, i].set_title(f"Ranking: {i+1}, Idx: {int(idx1)}", fontsize=6)
         ax[1, i].set_title(f"Idx: {int(idx2)}", fontsize=6)
 
-    for i, idx in enumerate(pred_oods_indices[:plot_top_N]):
+    for i, idx in enumerate(pred_irr_indices[:plot_top_N]):
         ax[2, i].imshow(
             transforms.ToPILImage()(denormalize_image(dataset[int(idx)][0]))
         )
