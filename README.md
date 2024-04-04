@@ -12,9 +12,7 @@ A holistic self-supervised data cleaning strategy to detect irrelevant samples, 
 
 This project is licensed under the terms of the [Creative Commons Attribution-NonCommercial 4.0 International license](https://creativecommons.org/licenses/by-nc/4.0/).
 
-<img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt="cc" width="20"/>
-<img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt="by" width="20"/>
-<img src="https://mirrors.creativecommons.org/presskit/icons/nc.svg" alt="nc" width="20"/>
+<img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt="cc" width="20"/> <img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt="by" width="20"/> <img src="https://mirrors.creativecommons.org/presskit/icons/nc.svg" alt="nc" width="20"/>
 
 ## Installation
 
