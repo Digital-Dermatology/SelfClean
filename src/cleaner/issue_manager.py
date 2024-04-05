@@ -56,7 +56,11 @@ class IssueManager:
                             df[k] = df[c_index].apply(lambda x: v[x])
             return df
         else:
-            return self.issue_dict.get(issue_type)
+            return sel_issues
 
     def __getitem__(self, key: str):
         return self.get_issues(issue_type=key, return_as_df=False)
+
+    @property
+    def keys(self):
+        return self.issue_dict.keys()

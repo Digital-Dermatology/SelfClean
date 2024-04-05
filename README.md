@@ -1,4 +1,4 @@
-# 🧼🔎 SelfClean 
+# 🧼🔎 SelfClean
 
 [![Test and Coverage](https://github.com/Digital-Dermatology/SelfClean/actions/workflows/pytest-coverage.yml/badge.svg)](https://github.com/Digital-Dermatology/SelfClean/actions/workflows/pytest-coverage.yml)
 
