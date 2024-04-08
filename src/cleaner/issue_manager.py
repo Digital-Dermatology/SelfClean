@@ -30,7 +30,7 @@ class IssueManager:
 
         sel_issues = self.issue_dict.get(issue_type)
         if sel_issues is None:
-            return sel_issues
+            raise ValueError(f"Issue type: {issue_type} not found.")
 
         if return_as_df:
             logger.warning("Returning as dataframe requires extensive memory.")

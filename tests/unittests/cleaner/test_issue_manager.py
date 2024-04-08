@@ -52,6 +52,11 @@ class TestIssueManager(unittest.TestCase):
             self.assertTrue("scores" in df.columns)
             self.assertTrue("auto_issues" in df.columns)
 
+    def test_get_wrong(self):
+        self.assertIsInstance(self.issues, IssueManager)
+        with self.assertRaises(ValueError):
+            _ = self.issues['irr']
+
 
 if __name__ == "__main__":
     unittest.main()
