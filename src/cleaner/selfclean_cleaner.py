@@ -6,6 +6,7 @@ from typing import Callable, Optional, Union
 import numpy as np
 import scienceplots  # noqa: F401
 import sklearn  # noqa: F401
+from loguru import logger
 from torch.utils.data import Dataset
 from tqdm.auto import tqdm
 
@@ -94,6 +95,7 @@ class SelfCleanCleaner(
         self.class_labels = class_labels
         self.N, self.D = emb_space.shape
         self.condensed_size = int(self.N * ((self.N - 1) / 2))
+        logger.info(f"Fitting cleaner on representation space: {emb_space.shape}")
 
         if self.memmap:
             dist_file = self.memmap_path / "dist_matrix.dat"
