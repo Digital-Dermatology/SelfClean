@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Optional, Union
 
+import numpy as np
 import pandas as pd
 from loguru import logger
 
@@ -24,7 +25,7 @@ class IssueManager:
         self,
         issue_type: Union[str, IssueTypes],
         return_as_df: bool = False,
-    ):
+    ) -> Union[np.ndarray, pd.DataFrame]:
         if issue_type is type(IssueTypes):
             issue_type = issue_type.value
 
