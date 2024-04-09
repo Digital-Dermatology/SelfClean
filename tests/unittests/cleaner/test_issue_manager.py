@@ -55,7 +55,7 @@ class TestIssueManager(unittest.TestCase):
     def test_get_wrong(self):
         self.assertIsInstance(self.issues, IssueManager)
         with self.assertRaises(ValueError):
-            _ = self.issues['irr']
+            _ = self.issues["irr"]
 
 
 if __name__ == "__main__":

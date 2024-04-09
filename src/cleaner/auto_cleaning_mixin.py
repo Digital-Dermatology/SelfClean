@@ -42,9 +42,9 @@ class AutoCleaningMixin:
         if self.auto_cleaning:
             # Near Duplicates
             if output_path is not None:
-                self.cleaner_kwargs[
-                    "path"
-                ] = f"{output_path.stem}_auto_dups{output_path.suffix}"
+                self.cleaner_kwargs["path"] = (
+                    f"{output_path.stem}_auto_dups{output_path.suffix}"
+                )
             self.cleaner_kwargs["alpha"] = self.near_duplicate_cut_off
             issues_dup = self.fraction_cut(
                 scores=pred_near_duplicate_scores,
@@ -54,9 +54,9 @@ class AutoCleaningMixin:
 
             # Irrelevant Samples
             if output_path is not None:
-                self.cleaner_kwargs[
-                    "path"
-                ] = f"{output_path.stem}_auto_oods{output_path.suffix}"
+                self.cleaner_kwargs["path"] = (
+                    f"{output_path.stem}_auto_oods{output_path.suffix}"
+                )
             self.cleaner_kwargs["alpha"] = self.irrelevant_cut_off
             issues_ood = self.fraction_cut(
                 scores=pred_irrelevant_scores,
@@ -67,9 +67,9 @@ class AutoCleaningMixin:
             # Label Errors
             if pred_label_error_scores is not None:
                 if output_path is not None:
-                    self.cleaner_kwargs[
-                        "path"
-                    ] = f"{output_path.stem}_auto_lbls{output_path.suffix}"
+                    self.cleaner_kwargs["path"] = (
+                        f"{output_path.stem}_auto_lbls{output_path.suffix}"
+                    )
                 self.cleaner_kwargs["alpha"] = self.label_error_cut_off
                 issues_lbl = self.fraction_cut(
                     scores=pred_label_error_scores,
