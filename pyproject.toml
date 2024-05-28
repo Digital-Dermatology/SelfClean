@@ -1,9 +1,6 @@
 [project]
 name = "SelfClean"
 description = "A holistic self-supervised data cleaning strategy to detect irrelevant samples, near duplicates and label errors."
-authors = [
-    { name = "Fabian Gröger", email = "fabian.groeger@unibas.ch" },
-]
 
 [tool.black]
 include = '\.pyi?$'
