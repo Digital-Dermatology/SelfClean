@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 
 from src.cleaner.base_cleaner import BaseCleaner
+from src.cleaner.issue_manager import IssueTypes
 from src.cleaner.selfclean_cleaner import SelfCleanCleaner
 
 
@@ -91,13 +92,12 @@ class TestSelfCleanCleaner(unittest.TestCase):
         cleaner = SelfCleanCleaner(memmap=False)
         cleaner.fit(emb_space=self.emb_space)
         out_dict = cleaner.predict()
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["irrelevants", "near_duplicates"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
             self.assertTrue("scores" in v)
-        self.assertIsNone(out_dict.get_issues("label_errors")["indices"])
-        self.assertIsNone(out_dict.get_issues("label_errors")["scores"])
+        self.assertIsNone(out_dict.get_issues("label_errors"))
 
     def test_predict_distance_function(self):
         cleaner = SelfCleanCleaner(
@@ -114,6 +114,41 @@ class TestSelfCleanCleaner(unittest.TestCase):
             self.assertTrue("scores" in v)
             self.assertIsNotNone(v["indices"])
             self.assertIsNotNone(v["scores"])
+
+    def test_predict_single_issues(self):
+        cleaner = SelfCleanCleaner(memmap=False)
+        cleaner.fit(emb_space=self.emb_space, labels=self.labels)
+        out_dict = cleaner.predict(issues_to_detect=[IssueTypes.IRRELEVANTS])
+        for issue_type in ["irrelevants"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNotNone(v)
+            self.assertTrue("indices" in v)
+            self.assertTrue("scores" in v)
+            self.assertIsNotNone(v["indices"])
+            self.assertIsNotNone(v["scores"])
+        for issue_type in ["near_duplicates", "label_errors"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNone(v)
+
+    def test_predict_multi_issues(self):
+        cleaner = SelfCleanCleaner(memmap=False)
+        cleaner.fit(emb_space=self.emb_space, labels=self.labels)
+        out_dict = cleaner.predict(
+            issues_to_detect=[
+                IssueTypes.LABEL_ERRORS,
+                IssueTypes.NEAR_DUPLICATES,
+            ],
+        )
+        for issue_type in ["near_duplicates", "label_errors"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNotNone(v)
+            self.assertTrue("indices" in v)
+            self.assertTrue("scores" in v)
+            self.assertIsNotNone(v["indices"])
+            self.assertIsNotNone(v["scores"])
+        for issue_type in ["irrelevants"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNone(v)
 
 
 if __name__ == "__main__":

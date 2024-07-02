@@ -6,6 +6,7 @@ import scipy
 import scipy.stats
 from loguru import logger
 
+from ..cleaner.issue_manager import IssueManager
 from ..utils.plotting import (
     plot_frac_cut,
     plot_sensitivity,
@@ -33,46 +34,49 @@ class AutoCleaningMixin:
 
     def perform_auto_cleaning(
         self,
+        issue_manger: IssueManager,
         return_dict: dict,
-        pred_near_duplicate_scores: np.ndarray,
-        pred_irrelevant_scores: np.ndarray,
-        pred_label_error_scores: Optional[np.ndarray],
         output_path: Optional[Union[str, Path]] = None,
     ):
         if self.auto_cleaning:
             # Near Duplicates
-            if output_path is not None:
-                self.cleaner_kwargs["path"] = (
-                    f"{output_path.stem}_auto_dups{output_path.suffix}"
+            near_duplicate_issues = issue_manger["near_duplicates"]
+            if near_duplicate_issues is not None:
+                if output_path is not None:
+                    self.cleaner_kwargs["path"] = (
+                        f"{output_path.stem}_auto_dups{output_path.suffix}"
+                    )
+                self.cleaner_kwargs["alpha"] = self.near_duplicate_cut_off
+                issues_dup = self.fraction_cut(
+                    scores=near_duplicate_issues["scores"],
+                    **self.cleaner_kwargs,
                 )
-            self.cleaner_kwargs["alpha"] = self.near_duplicate_cut_off
-            issues_dup = self.fraction_cut(
-                scores=pred_near_duplicate_scores,
-                **self.cleaner_kwargs,
-            )
-            return_dict["near_duplicates"]["auto_issues"] = issues_dup
+                return_dict["near_duplicates"]["auto_issues"] = issues_dup
 
             # Irrelevant Samples
-            if output_path is not None:
-                self.cleaner_kwargs["path"] = (
-                    f"{output_path.stem}_auto_oods{output_path.suffix}"
+            irrelevant_issues = issue_manger["irrelevants"]
+            if irrelevant_issues is not None:
+                if output_path is not None:
+                    self.cleaner_kwargs["path"] = (
+                        f"{output_path.stem}_auto_oods{output_path.suffix}"
+                    )
+                self.cleaner_kwargs["alpha"] = self.irrelevant_cut_off
+                issues_ood = self.fraction_cut(
+                    scores=irrelevant_issues["scores"],
+                    **self.cleaner_kwargs,
                 )
-            self.cleaner_kwargs["alpha"] = self.irrelevant_cut_off
-            issues_ood = self.fraction_cut(
-                scores=pred_irrelevant_scores,
-                **self.cleaner_kwargs,
-            )
-            return_dict["irrelevants"]["auto_issues"] = issues_ood
+                return_dict["irrelevants"]["auto_issues"] = issues_ood
 
             # Label Errors
-            if pred_label_error_scores is not None:
+            label_error_issues = issue_manger["label_errors"]
+            if label_error_issues is not None:
                 if output_path is not None:
                     self.cleaner_kwargs["path"] = (
                         f"{output_path.stem}_auto_lbls{output_path.suffix}"
                     )
                 self.cleaner_kwargs["alpha"] = self.label_error_cut_off
                 issues_lbl = self.fraction_cut(
-                    scores=pred_label_error_scores,
+                    scores=label_error_issues["scores"],
                     **self.cleaner_kwargs,
                 )
                 return_dict["label_errors"]["auto_issues"] = issues_lbl

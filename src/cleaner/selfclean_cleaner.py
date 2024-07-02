@@ -1,7 +1,7 @@
 import math
 import tempfile
 from pathlib import Path
-from typing import Callable, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import numpy as np
 import scienceplots  # noqa: F401
@@ -13,7 +13,7 @@ from tqdm.auto import tqdm
 from ..cleaner.auto_cleaning_mixin import AutoCleaningMixin
 from ..cleaner.base_cleaner import BaseCleaner
 from ..cleaner.irrelevants.lad_mixin import LADIrrelevantMixin
-from ..cleaner.issue_manager import IssueManager
+from ..cleaner.issue_manager import IssueManager, IssueTypes
 from ..cleaner.label_errors.intra_extra_distance_mixin import (
     IntraExtraDistanceLabelErrorMixin,
 )
@@ -159,10 +159,34 @@ class SelfCleanCleaner(
         self.is_fitted = True
         return self
 
-    def predict(self) -> IssueManager:
-        pred_nd_scores, pred_nd_indices = self.get_near_duplicate_ranking()
-        pred_irr_scores, pred_irr_indices = self.get_irrelevant_ranking()
-        pred_lbl_errs_scores, pred_lbl_errs_indices = self.get_label_error_ranking()
+    def predict(
+        self,
+        issues_to_detect: List[IssueTypes] = [
+            IssueTypes.NEAR_DUPLICATES,
+            IssueTypes.IRRELEVANTS,
+            IssueTypes.LABEL_ERRORS,
+        ],
+    ) -> IssueManager:
+        return_dict = {}
+        if IssueTypes.NEAR_DUPLICATES in issues_to_detect:
+            pred_nd_scores, pred_nd_indices = self.get_near_duplicate_ranking()
+            return_dict["near_duplicates"] = {
+                "indices": pred_nd_indices,
+                "scores": pred_nd_scores,
+            }
+        if IssueTypes.IRRELEVANTS in issues_to_detect:
+            pred_irr_scores, pred_irr_indices = self.get_irrelevant_ranking()
+            return_dict["irrelevants"] = {
+                "indices": pred_irr_indices,
+                "scores": pred_irr_scores,
+            }
+        if IssueTypes.LABEL_ERRORS in issues_to_detect:
+            pred_lbl_errs_scores, pred_lbl_errs_indices = self.get_label_error_ranking()
+            if pred_lbl_errs_scores is not None and pred_lbl_errs_indices is not None:
+                return_dict["label_errors"] = {
+                    "indices": pred_lbl_errs_indices,
+                    "scores": pred_lbl_errs_scores,
+                }
 
         if self.labels is not None:
             # transform labels using class names if given
@@ -172,42 +196,27 @@ class SelfCleanCleaner(
             ]
         else:
             labels = self.labels
+        # create the manger for the issues to pass to plotting and return
+        issue_manager = IssueManager(
+            issue_dict=return_dict,
+            meta_data_dict={
+                "path": self.paths,
+                "label": labels,
+            },
+        )
 
         if self.plot_top_N is not None and self.dataset is not None:
             plot_inspection_result(
-                pred_dup_indices=pred_nd_indices,
-                pred_irr_indices=pred_irr_indices,
-                pred_lbl_errs_indices=pred_lbl_errs_indices,
+                issue_manger=issue_manager,
                 dataset=self.dataset,
                 labels=labels,
                 plot_top_N=self.plot_top_N,
                 output_path=self.output_path,
                 figsize=self.figsize,
             )
-
-        meta_data_dict = {
-            "path": self.paths,
-            "label": labels,
-        }
-        return_dict = {
-            "irrelevants": {
-                "indices": pred_irr_indices,
-                "scores": pred_irr_scores,
-            },
-            "near_duplicates": {
-                "indices": pred_nd_indices,
-                "scores": pred_nd_scores,
-            },
-            "label_errors": {
-                "indices": pred_lbl_errs_indices,
-                "scores": pred_lbl_errs_scores,
-            },
-        }
         return_dict = self.perform_auto_cleaning(
+            issue_manger=issue_manager,
             return_dict=return_dict,
-            pred_near_duplicate_scores=pred_nd_scores,
-            pred_irrelevant_scores=pred_irr_scores,
-            pred_label_error_scores=pred_lbl_errs_scores,
             output_path=self.output_path,
         )
-        return IssueManager(issue_dict=return_dict, meta_data_dict=meta_data_dict)
+        return issue_manager

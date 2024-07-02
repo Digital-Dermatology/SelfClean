@@ -41,13 +41,12 @@ class TestAutoCleaning(unittest.TestCase):
         cleaner = SelfCleanCleaner(memmap=False, auto_cleaning=True)
         cleaner.fit(emb_space=self.emb_space)
         out_dict = cleaner.predict()
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["irrelevants", "near_duplicates"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
             self.assertTrue("scores" in v)
-        self.assertIsNone(out_dict.get_issues("label_errors")["indices"])
-        self.assertIsNone(out_dict.get_issues("label_errors")["scores"])
+        self.assertIsNone(out_dict.get_issues("label_errors"))
 
     def test_predict_auto_cleaning_with_plotting(self):
         cleaner = SelfCleanCleaner(

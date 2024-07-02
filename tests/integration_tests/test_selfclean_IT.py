@@ -94,6 +94,20 @@ class TestSelfCleanIT(unittest.TestCase):
         )
         self._check_output(out_dict)
 
+    def test_run_with_plotting(self):
+        fake_dataset = FakeData(size=20)
+        selfclean = SelfClean(
+            memmap=False,
+            plot_distribution=True,
+            plot_top_N=7,
+        )
+        out_dict = selfclean.run_on_dataset(
+            dataset=fake_dataset,
+            epochs=1,
+            num_workers=4,
+        )
+        self._check_output(out_dict)
+
     def _check_output(self, out_dict):
         for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
             v = out_dict.get_issues(issue_type)

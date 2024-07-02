@@ -14,6 +14,13 @@ class TestIssueManager(unittest.TestCase):
         self.cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         self.issues = self.cleaner.predict()
 
+    def test_keys(self):
+        self.assertIsInstance(self.issues, IssueManager)
+        self.assertEqual(
+            sorted(list(self.issues.keys)),
+            sorted(["irrelevants", "near_duplicates", "label_errors"]),
+        )
+
     def test_get(self):
         self.assertIsInstance(self.issues, IssueManager)
         for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
@@ -54,8 +61,7 @@ class TestIssueManager(unittest.TestCase):
 
     def test_get_wrong(self):
         self.assertIsInstance(self.issues, IssueManager)
-        with self.assertRaises(ValueError):
-            _ = self.issues["irr"]
+        self.assertIsNone(self.issues["irr"])
 
 
 if __name__ == "__main__":

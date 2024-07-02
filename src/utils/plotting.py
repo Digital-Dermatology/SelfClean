@@ -6,61 +6,92 @@ import numpy as np
 from torch.utils.data import Dataset
 from torchvision import transforms
 
+from ..cleaner.issue_manager import IssueManager
 from ..ssl_library.src.utils.logging import create_subtitle, denormalize_image
 
 
 def plot_inspection_result(
-    pred_dup_indices: np.ndarray,
-    pred_irr_indices: np.ndarray,
+    issue_manger: IssueManager,
     dataset: Dataset,
     plot_top_N: int,
-    pred_lbl_errs_indices: Optional[np.ndarray] = None,
     labels: Optional[Union[np.ndarray, list]] = None,
     output_path: Optional[Union[str, Path]] = None,
     figsize: tuple = (10, 8),
 ):
-    rows = 4 if pred_lbl_errs_indices is not None else 3
+    rows = len(issue_manger.keys)
+    if issue_manger["near_duplicates"] is not None:
+        rows += 1
     fig, ax = plt.subplots(rows, plot_top_N, figsize=figsize)
-    for i, (idx1, idx2) in enumerate(pred_dup_indices[:plot_top_N]):
-        ax[0, i].imshow(
-            transforms.ToPILImage()(denormalize_image(dataset[int(idx1)][0]))
-        )
-        ax[1, i].imshow(
-            transforms.ToPILImage()(denormalize_image(dataset[int(idx2)][0]))
-        )
-        ax[0, i].set_xticks([])
-        ax[0, i].set_yticks([])
-        ax[1, i].set_xticks([])
-        ax[1, i].set_yticks([])
-        ax[0, i].set_title(f"Ranking: {i+1}, Idx: {int(idx1)}", fontsize=6)
-        ax[1, i].set_title(f"Idx: {int(idx2)}", fontsize=6)
+    ax_idx = 0
 
-    for i, idx in enumerate(pred_irr_indices[:plot_top_N]):
-        ax[2, i].imshow(
-            transforms.ToPILImage()(denormalize_image(dataset[int(idx)][0]))
-        )
-        ax[2, i].set_title(f"Ranking: {i+1}, Idx: {int(idx)}", fontsize=6)
-        ax[2, i].set_xticks([])
-        ax[2, i].set_yticks([])
+    near_duplicate_issues = issue_manger["near_duplicates"]
+    if near_duplicate_issues is not None:
+        for i, (idx1, idx2) in enumerate(near_duplicate_issues["indices"][:plot_top_N]):
+            ax[ax_idx, i].imshow(
+                transforms.ToPILImage()(denormalize_image(dataset[int(idx1)][0]))
+            )
+            ax[ax_idx + 1, i].imshow(
+                transforms.ToPILImage()(denormalize_image(dataset[int(idx2)][0]))
+            )
+            ax[ax_idx, i].set_xticks([])
+            ax[ax_idx, i].set_yticks([])
+            ax[ax_idx + 1, i].set_xticks([])
+            ax[ax_idx + 1, i].set_yticks([])
+            ax[ax_idx, i].set_title(f"Ranking: {i+1}, Idx: {int(idx1)}", fontsize=6)
+            ax[ax_idx + 1, i].set_title(f"Idx: {int(idx2)}", fontsize=6)
+        ax_idx += 2
 
-    if pred_lbl_errs_indices is not None:
-        for i, idx in enumerate(pred_lbl_errs_indices[:plot_top_N]):
-            class_label = labels[idx] if labels is not None else None
-            ax[3, i].imshow(
+    irrelevant_issues = issue_manger["irrelevants"]
+    if irrelevant_issues is not None:
+        for i, idx in enumerate(irrelevant_issues["indices"][:plot_top_N]):
+            ax[ax_idx, i].imshow(
                 transforms.ToPILImage()(denormalize_image(dataset[int(idx)][0]))
             )
-            ax[3, i].set_title(
+            ax[ax_idx, i].set_title(f"Ranking: {i+1}, Idx: {int(idx)}", fontsize=6)
+            ax[ax_idx, i].set_xticks([])
+            ax[ax_idx, i].set_yticks([])
+        ax_idx += 1
+
+    label_error_issues = issue_manger["label_errors"]
+    if label_error_issues is not None:
+        for i, idx in enumerate(label_error_issues["indices"][:plot_top_N]):
+            class_label = labels[idx] if labels is not None else None
+            ax[ax_idx, i].imshow(
+                transforms.ToPILImage()(denormalize_image(dataset[int(idx)][0]))
+            )
+            ax[ax_idx, i].set_title(
                 f"Ranking: {i+1}\nIdx: {int(idx)}\nLbl: {class_label}",
                 fontsize=6,
             )
-            ax[3, i].set_xticks([])
-            ax[3, i].set_yticks([])
+            ax[ax_idx, i].set_xticks([])
+            ax[ax_idx, i].set_yticks([])
 
+    ax_idx = 0
     grid = plt.GridSpec(rows, plot_top_N)
-    create_subtitle(fig, grid[0, ::], "Near-Duplicate Ranking", fontsize=12)
-    create_subtitle(fig, grid[2, ::], "Irrelevant Samples Ranking", fontsize=12)
-    if pred_lbl_errs_indices is not None:
-        create_subtitle(fig, grid[3, ::], "Label Error Ranking", fontsize=12)
+    if near_duplicate_issues is not None:
+        create_subtitle(
+            fig,
+            grid[ax_idx, ::],
+            "Near-Duplicate Ranking",
+            fontsize=12,
+        )
+        ax_idx += 2
+    if irrelevant_issues is not None:
+        create_subtitle(
+            fig,
+            grid[ax_idx, ::],
+            "Irrelevant Samples Ranking",
+            fontsize=12,
+        )
+        ax_idx += 1
+    if label_error_issues is not None:
+        create_subtitle(
+            fig,
+            grid[ax_idx, ::],
+            "Label Error Ranking",
+            fontsize=12,
+        )
+
     fig.tight_layout()
     if output_path is not None:
         plt.savefig(output_path, bbox_inches="tight")

@@ -15,23 +15,19 @@ class IssueTypes(Enum):
 class IssueManager:
     def __init__(self, issue_dict: dict, meta_data_dict: Optional[dict] = None):
         self.issue_dict = issue_dict
-        for issue_type in IssueTypes:
-            assert (
-                issue_type.value in self.issue_dict
-            ), f"{issue_type.value} not found in given dict."
         self.meta_data_dict = meta_data_dict if meta_data_dict is not None else {}
 
     def get_issues(
         self,
         issue_type: Union[str, IssueTypes],
         return_as_df: bool = False,
-    ) -> Union[np.ndarray, pd.DataFrame]:
+    ) -> Union[np.ndarray, pd.DataFrame, None]:
         if issue_type is type(IssueTypes):
             issue_type = issue_type.value
 
-        sel_issues = self.issue_dict.get(issue_type)
+        sel_issues = self.issue_dict.get(issue_type, None)
         if sel_issues is None:
-            raise ValueError(f"Issue type: {issue_type} not found.")
+            return sel_issues
 
         if return_as_df:
             logger.warning("Returning as dataframe requires extensive memory.")
