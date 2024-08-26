@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+from memory_profiler import profile
 
 from src.cleaner.base_cleaner import BaseCleaner
 from src.cleaner.issue_manager import IssueTypes
@@ -12,10 +13,13 @@ class TestSelfCleanCleaner(unittest.TestCase):
         self.emb_space = np.random.rand(50, 198)
         self.labels = np.random.randint(5, size=50)
         self.class_labels = [f"test_{x}" for x in np.unique(self.labels)]
+        self.memory_profiling = True
 
     def test_fit(self):
         cleaner = SelfCleanCleaner(memmap=False)
         self.assertEqual(cleaner.is_fitted, False)
+        if self.memory_profiling:
+            cleaner.fit = profile(cleaner.fit, precision=4)
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         self.assertEqual(cleaner.is_fitted, True)
         self.assertIsInstance(cleaner, BaseCleaner)
@@ -24,13 +28,19 @@ class TestSelfCleanCleaner(unittest.TestCase):
 
     def test_fit_with_memmaps(self):
         cleaner = SelfCleanCleaner(memmap=True)
+        if self.memory_profiling:
+            cleaner.fit = profile(cleaner.fit, precision=4)
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         self.assertIsNotNone(cleaner.distance_matrix)
         self.assertIsNotNone(cleaner.p_distances)
 
     def test_predict(self):
         cleaner = SelfCleanCleaner(memmap=False)
+        if self.memory_profiling:
+            cleaner.fit = profile(cleaner.fit, precision=4)
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
+        if self.memory_profiling:
+            cleaner.predict = profile(cleaner.predict, precision=4)
         out_dict = cleaner.predict()
         for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
             v = out_dict.get_issues(issue_type)

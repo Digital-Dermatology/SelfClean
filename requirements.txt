@@ -21,3 +21,4 @@ scikit-image
 codecov
 jupyter
 loguru
+memory-profiler
