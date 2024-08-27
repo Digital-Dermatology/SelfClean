@@ -60,6 +60,8 @@ These examples analyze different benchmark datasets such as:
 - <a href="https://github.com/fastai/imagenette">Imagenette</a> 🖼️ (Open in <a href="https://nbviewer.org/github/Digital-Dermatology/SelfClean/blob/main/examples/Investigate_Imagenette.ipynb">NBViewer</a> | <a href="https://github.com/Digital-Dermatology/SelfClean/blob/main/examples/Investigate_Imagenette.ipynb">GitHub</a> | <a href="https://colab.research.google.com/github/Digital-Dermatology/SelfClean/blob/main/examples/Investigate_Imagenette.ipynb">Colab</a>)
 - <a href="https://www.robots.ox.ac.uk/~vgg/data/pets/">Oxford-IIIT Pet</a> 🐶 (Open in <a href="https://nbviewer.org/github/Digital-Dermatology/SelfClean/blob/main/examples/Investigate_OxfordIIITPet.ipynb">NBViewer</a> | <a href="https://github.com/Digital-Dermatology/SelfClean/blob/main/examples/Investigate_OxfordIIITPet.ipynb">GitHub</a> | <a href="https://colab.research.google.com/github/Digital-Dermatology/SelfClean/blob/main/examples/Investigate_OxfordIIITPet.ipynb">Colab</a>)
 
+Also, check out our <a href="https://www.kaggle.com/code/fabiangrger/removing-the-psychic-from-the-dataset">Kaggle notebook</a> to see an illustration of how to get a gold medal for cleaning a competition dataset.
+
 ## Development Environment
 Run `make` for a list of possible targets.
 
