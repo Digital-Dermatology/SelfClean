@@ -73,6 +73,7 @@ class TestAutoCleaning(unittest.TestCase):
             irrelevant_cut_off=0.01,
             near_duplicate_cut_off=0.01,
             label_error_cut_off=0.01,
+            significance_level=0.01,
         )
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()

@@ -13,7 +13,7 @@ class TestSelfCleanCleaner(unittest.TestCase):
         self.emb_space = np.random.rand(50, 198)
         self.labels = np.random.randint(5, size=50)
         self.class_labels = [f"test_{x}" for x in np.unique(self.labels)]
-        self.memory_profiling = True
+        self.memory_profiling = False
 
     def test_fit(self):
         cleaner = SelfCleanCleaner(memmap=False)
