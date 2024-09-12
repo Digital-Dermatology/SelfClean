@@ -1,7 +1,9 @@
 FROM pytorch/pytorch:1.9.1-cuda11.1-cudnn8-runtime
 
-RUN apt-get update && apt-get install -y apt-transport-https
+RUN apt-get update
+RUN apt-get install -y apt-transport-https
 RUN apt-get install -y libtcmalloc-minimal4
+RUN apt-get install -y libomp-dev
 RUN apt-get install -y sox
 RUN apt-get install -y git
 

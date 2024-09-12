@@ -42,6 +42,7 @@ class SelfCleanCleaner(
         # memory management
         memmap: bool = True,
         memmap_path: Union[Path, str, None] = None,
+        approximate_nn: bool = False,
         # plotting
         plot_distribution: bool = False,
         plot_top_N: Optional[int] = None,
@@ -57,6 +58,7 @@ class SelfCleanCleaner(
         fix_random_seeds(seed=random_seed)
 
         self.memmap = memmap
+        self.approximate_nn = approximate_nn
         self.chunk_size = chunk_size
         self.precision_type_distance = precision_type_distance
 
@@ -89,6 +91,7 @@ class SelfCleanCleaner(
         dataset: Optional[Dataset] = None,
         class_labels: Optional[list] = None,
     ):
+        self.emb_space = emb_space
         self.labels = labels
         self.dataset = dataset
         self.paths = paths
@@ -169,11 +172,15 @@ class SelfCleanCleaner(
     ) -> IssueManager:
         return_dict = {}
         if IssueTypes.NEAR_DUPLICATES in issues_to_detect:
-            pred_nd_scores, pred_nd_indices = self.get_near_duplicate_ranking()
-            return_dict["near_duplicates"] = {
-                "indices": pred_nd_indices,
-                "scores": pred_nd_scores,
-            }
+            if not self.approximate_nn:
+                pred_nd_scores, pred_nd_indices = self.get_near_duplicate_ranking()
+                return_dict["near_duplicates"] = {
+                    "indices": pred_nd_indices,
+                    "scores": pred_nd_scores,
+                }
+            else:
+                approx_result_df = self.get_approx_near_duplicate_ranking()
+                return_dict["approx_near_duplicates"] = approx_result_df
         if IssueTypes.IRRELEVANTS in issues_to_detect:
             pred_irr_scores, pred_irr_indices = self.get_irrelevant_ranking()
             return_dict["irrelevants"] = {

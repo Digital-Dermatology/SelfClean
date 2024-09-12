@@ -150,6 +150,48 @@ class TestSelfCleanCleaner(unittest.TestCase):
             v = out_dict.get_issues(issue_type)
             self.assertIsNone(v)
 
+    def test_approx_nearest_duplicates(self):
+        cleaner = SelfCleanCleaner(
+            memmap=False,
+            approximate_nn=True,
+            approx_no_neighbors=10,
+        )
+        cleaner.fit(emb_space=self.emb_space, labels=self.labels)
+        out_dict = cleaner.predict(issues_to_detect=[IssueTypes.NEAR_DUPLICATES])
+        for issue_type in ["approx_near_duplicates"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNotNone(v)
+            self.assertEqual(len([x for x in v.columns if "nn_idx_" in x]), 10 - 1)
+            self.assertEqual(len([x for x in v.columns if "nn_dist_" in x]), 10 - 1)
+        for issue_type in ["near_duplicates", "irrelevants", "label_errors"]:
+            v = out_dict.get_issues(issue_type)
+            self.assertIsNone(v)
+
+    def test_approx_nearest_duplicates_w_exact(self):
+        cleaner = SelfCleanCleaner(
+            memmap=False,
+            approximate_nn=True,
+            approx_no_neighbors=len(self.emb_space),
+        )
+        cleaner.fit(emb_space=self.emb_space, labels=self.labels)
+        out_dict = cleaner.predict(issues_to_detect=[IssueTypes.NEAR_DUPLICATES])
+        df_approx_nn = out_dict.get_issues("approx_near_duplicates")
+
+        # fit without approximation
+        cleaner.approximate_nn = False
+        out_dict = cleaner.predict(issues_to_detect=[IssueTypes.NEAR_DUPLICATES])
+        df_nn = out_dict.get_issues("near_duplicates", return_as_df=True)
+
+        # check if they align
+        for index in range(len(self.emb_space)):
+            nn = df_nn[
+                (df_nn["indices_1"] == index) | (df_nn["indices_2"] == index)
+            ].iloc[0]
+            nn_approx = df_approx_nn[df_approx_nn["seed_idx"] == index].iloc[0]
+            idx = nn["indices_1"] if nn["indices_1"] != index else nn["indices_2"]
+            idx_approx = nn_approx["nn_idx_1"]
+            self.assertEqual(idx, idx_approx)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,6 +10,14 @@ from ...utils.utils import condensed_to_square
 
 
 class EmbeddingDistanceMixin(BaseNearDuplicateMixin):
+    def __init__(
+        self,
+        approx_no_neighbors: int = 100,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.approx_no_neighbors = approx_no_neighbors
+
     def get_near_duplicate_ranking(self) -> Tuple[np.ndarray, np.ndarray]:
         if self.memmap:
             score_file = self.memmap_path / "near_duplicate_scores.dat"
@@ -77,3 +85,28 @@ class EmbeddingDistanceMixin(BaseNearDuplicateMixin):
                 title="Distribution of near-duplicates",
             )
         return scores_near_dup, indices_near_dup
+
+    def get_approx_near_duplicate_ranking(self):
+        import copy
+
+        import faiss
+        import pandas as pd
+
+        # faiss expects all arrays to be `float32`
+        _emb_space = copy.deepcopy(self.emb_space)
+        _emb_space = _emb_space.astype("float32")
+        # create a `faiss` index with cosine distance
+        index = faiss.IndexFlat(self.D, faiss.METRIC_INNER_PRODUCT)
+        faiss.normalize_L2(_emb_space)
+        index.add(_emb_space)
+        # search the nearest neighbors
+        distances, indices = index.search(_emb_space, self.approx_no_neighbors)
+        # create the return dataframe
+        df = pd.DataFrame()
+        df[[f"nn_idx_{x}" for x in range(self.approx_no_neighbors)]] = indices
+        df[[f"nn_dist_{x}" for x in range(self.approx_no_neighbors)]] = distances
+        df = df.reindex(sorted(df.columns, key=lambda x: int(x.split("_")[-1])), axis=1)
+        df = df.drop(columns=["nn_dist_0"])
+        df = df.rename(columns={"nn_idx_0": "seed_idx"})
+        del _emb_space, index
+        return df

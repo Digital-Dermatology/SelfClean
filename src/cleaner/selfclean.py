@@ -126,7 +126,7 @@ class SelfClean:
     def run_on_image_folder(
         self,
         input_path: Union[str, Path],
-        epochs: int = 100,
+        epochs: int = 10,
         batch_size: int = 64,
         ssl_pre_training: bool = True,
         save_every_n_epochs: int = 10,

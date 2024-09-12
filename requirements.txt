@@ -21,3 +21,5 @@ scikit-image
 codecov
 jupyter
 loguru
+faiss-cpu
+faiss-gpu
