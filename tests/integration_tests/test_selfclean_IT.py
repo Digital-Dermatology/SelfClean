@@ -7,6 +7,7 @@ from pathlib import Path
 
 from torchvision.datasets import FakeData
 
+from src.cleaner.issue_manager import IssueTypes
 from src.cleaner.selfclean import PretrainingType, SelfClean
 from tests.testutils.paths import testfiles_path
 
@@ -44,6 +45,19 @@ class TestSelfCleanIT(unittest.TestCase):
             num_workers=4,
         )
         self._check_output(out_dict)
+
+    def test_run_with_files_dino_single_issue_type(self):
+        temp_work_dir = tempfile.TemporaryDirectory()
+        selfclean = SelfClean()
+        out_dict = selfclean.run_on_image_folder(
+            input_path=testfiles_path,
+            pretraining_type=PretrainingType.DINO,
+            work_dir=temp_work_dir.name,
+            epochs=1,
+            num_workers=4,
+            issues_to_detect=[IssueTypes.IRRELEVANTS],
+        )
+        self._check_output(out_dict, issue_types=["irrelevants"])
 
     def test_run_with_files_dino_wo_pretraining(self):
         selfclean = SelfClean()
@@ -108,8 +122,12 @@ class TestSelfCleanIT(unittest.TestCase):
         )
         self._check_output(out_dict)
 
-    def _check_output(self, out_dict):
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+    def _check_output(
+        self,
+        out_dict,
+        issue_types=["irrelevants", "near_duplicates", "label_errors"],
+    ):
+        for issue_type in issue_types:
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)

@@ -3,7 +3,7 @@ import os
 import platform
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import torch
@@ -12,6 +12,7 @@ from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torchvision.transforms import InterpolationMode
 
+from ..cleaner.issue_manager import IssueTypes
 from ..cleaner.selfclean_cleaner import SelfCleanCleaner
 from ..ssl_library.src.augmentations.multi_crop import MultiCropAugmentation
 from ..ssl_library.src.pkg import Embedder, embed_dataset
@@ -134,6 +135,11 @@ class SelfClean:
         num_workers: Optional[int] = os.cpu_count(),
         pretraining_type: PretrainingType = PretrainingType.DINO,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
+        issues_to_detect: List[IssueTypes] = [
+            IssueTypes.NEAR_DUPLICATES,
+            IssueTypes.IRRELEVANTS,
+            IssueTypes.LABEL_ERRORS,
+        ],
         # embedding
         n_layers: int = 1,
         apply_l2_norm: bool = True,
@@ -156,6 +162,7 @@ class SelfClean:
             num_workers=num_workers,
             pretraining_type=pretraining_type,
             hyperparameters=hyperparameters,
+            issues_to_detect=issues_to_detect,
             n_layers=n_layers,
             apply_l2_norm=apply_l2_norm,
             additional_run_info=(
@@ -176,6 +183,11 @@ class SelfClean:
         num_workers: Optional[int] = os.cpu_count(),
         pretraining_type: PretrainingType = PretrainingType.DINO,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
+        issues_to_detect: List[IssueTypes] = [
+            IssueTypes.NEAR_DUPLICATES,
+            IssueTypes.IRRELEVANTS,
+            IssueTypes.LABEL_ERRORS,
+        ],
         # embedding
         n_layers: int = 1,
         apply_l2_norm: bool = True,
@@ -194,6 +206,7 @@ class SelfClean:
             num_workers=num_workers,
             pretraining_type=pretraining_type,
             hyperparameters=hyperparameters,
+            issues_to_detect=issues_to_detect,
             n_layers=n_layers,
             apply_l2_norm=apply_l2_norm,
             additional_run_info=(
@@ -214,6 +227,11 @@ class SelfClean:
         num_workers: Optional[int] = os.cpu_count(),
         pretraining_type: PretrainingType = PretrainingType.DINO,
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
+        issues_to_detect: List[IssueTypes] = [
+            IssueTypes.NEAR_DUPLICATES,
+            IssueTypes.IRRELEVANTS,
+            IssueTypes.LABEL_ERRORS,
+        ],
         # embedding
         n_layers: int = 1,
         apply_l2_norm: bool = True,
@@ -275,7 +293,7 @@ class SelfClean:
                 dataset=dataset,
                 class_labels=dataset.classes if hasattr(dataset, "classes") else None,
             )
-        return self.cleaner.predict()
+        return self.cleaner.predict(issues_to_detect=issues_to_detect)
 
     def train_dino(
         self,

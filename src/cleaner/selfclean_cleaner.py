@@ -23,6 +23,7 @@ from ..distances.projective_distance import *  # noqa: F401, F403
 from ..ssl_library.src.utils.logging import set_log_level
 from ..ssl_library.src.utils.utils import fix_random_seeds
 from ..utils.plotting import plot_inspection_result
+from ..utils.utils import triu_indices_memmap
 
 
 class SelfCleanCleaner(
@@ -37,7 +38,7 @@ class SelfCleanCleaner(
         # distance calculation
         distance_function_path: str = "sklearn.metrics.pairwise.",
         distance_function_name: str = "cosine_similarity",
-        chunk_size: int = 100,
+        chunk_size: int = 10_000,
         precision_type_distance: type = np.float32,
         # memory management
         memmap: bool = True,
@@ -151,15 +152,25 @@ class SelfCleanCleaner(
                 mode="w+",
                 shape=(self.condensed_size,),
             )
+            triu_indices = triu_indices_memmap(
+                str(self.memmap_path / "triu_indices"),
+                N=self.N,
+                k=1,
+            )
         else:
             self.p_distances = np.zeros(
                 shape=(self.condensed_size,),
                 dtype=self.precision_type_distance,
             )
-        self.p_distances[:] = self.distance_matrix[
-            ~np.tril(np.ones((self.N, self.N), dtype=bool))
-        ]
+            triu_indices = np.triu_indices(self.N, k=1)
+        # create the upper triangular matrix of the distance matrix
+        for start_idx in range(0, len(triu_indices[0]), self.chunk_size):
+            end_idx = min(start_idx + self.chunk_size, len(triu_indices[0]))
+            self.p_distances[start_idx:end_idx] = self.distance_matrix[
+                triu_indices[0][start_idx:end_idx], triu_indices[1][start_idx:end_idx]
+            ]
         self.is_fitted = True
+        del triu_indices
         return self
 
     def predict(

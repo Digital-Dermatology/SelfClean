@@ -22,6 +22,7 @@ class AutoCleaningMixin:
         irrelevant_cut_off: float = 0.01,
         near_duplicate_cut_off: float = 0.01,
         label_error_cut_off: float = 0.01,
+        significance_level: float = 0.05,
         cleaner_kwargs: dict = {},
         **kwargs,
     ):
@@ -30,6 +31,7 @@ class AutoCleaningMixin:
         self.irrelevant_cut_off = irrelevant_cut_off
         self.near_duplicate_cut_off = near_duplicate_cut_off
         self.label_error_cut_off = label_error_cut_off
+        self.significance_level = significance_level
         self.cleaner_kwargs = cleaner_kwargs
 
     def perform_auto_cleaning(
@@ -39,6 +41,9 @@ class AutoCleaningMixin:
         output_path: Optional[Union[str, Path]] = None,
     ):
         if self.auto_cleaning:
+            # make sure the significance level is correctly set
+            self.cleaner_kwargs["q"] = self.significance_level
+
             # Near Duplicates
             near_duplicate_issues = issue_manger["near_duplicates"]
             if near_duplicate_issues is not None:

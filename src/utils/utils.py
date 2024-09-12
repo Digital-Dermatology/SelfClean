@@ -1,5 +1,6 @@
 import math
 from functools import partial
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -39,6 +40,51 @@ def actual_indices(idx, n):
     if np.sum(ii < 0) > 0 or np.sum(jj < 0) > 0:
         logger.error("Negative indices")
     return ii, jj
+
+
+def triu_indices_memmap(filename: str, N: int, k: int = 0):
+    """
+    Generate the indices for the upper-triangular part of a matrix using memmap.
+
+    Parameters:
+    filename (str): The name of the file to use for memmap.
+    N (int): The size of the square matrix.
+    k (int): Diagonal offset. k=0 is the main diagonal, k>0 is above, and k<0 is below.
+
+    Returns:
+    tuple of ndarray: Indices for the upper-triangular part of the matrix.
+    """
+    # Calculate the number of elements in the upper triangular part
+    num_elements = sum(max(0, N - k - i) for i in range(N))
+
+    # Create memmap arrays for row and column indices
+    rows_filename = Path(filename + "_rows.dat")
+    cols_filename = Path(filename + "_cols.dat")
+    if rows_filename.exists():
+        rows_filename.unlink()
+    if cols_filename.exists():
+        cols_filename.unlink()
+    rows_memmap = np.memmap(
+        str(rows_filename),
+        dtype="int64",
+        mode="w+",
+        shape=(num_elements,),
+    )
+    cols_memmap = np.memmap(
+        str(cols_filename),
+        dtype="int64",
+        mode="w+",
+        shape=(num_elements,),
+    )
+
+    idx = 0
+    for i in range(N):
+        for j in range(i + k, N):
+            rows_memmap[idx] = i
+            cols_memmap[idx] = j
+            idx += 1
+
+    return rows_memmap, cols_memmap
 
 
 def has_same_label(arr) -> np.ndarray:

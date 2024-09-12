@@ -45,7 +45,7 @@ class EmbeddingDistanceMixin(BaseNearDuplicateMixin):
         vec_index_mapping = np.vectorize(condensed_to_square)
         # here the chunk size is x**2 since we have quadratically more
         chunk_size = self.chunk_size**2
-        # chunk the sorted values for memory optimization
+        # chunk the sorted values for memory efficiency
         n_chunks = math.ceil(self.condensed_size / chunk_size)
         if self.memmap:
             indices_file = self.memmap_path / "near_duplicate_indices.dat"
@@ -63,6 +63,7 @@ class EmbeddingDistanceMixin(BaseNearDuplicateMixin):
                 shape=(self.condensed_size, 2),
                 dtype=np.int32,
             )
+        # this creates the corresponding indices of the sorted array
         for i in tqdm(
             range(n_chunks),
             desc="Processing possible near duplicates",

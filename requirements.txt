@@ -23,3 +23,4 @@ jupyter
 loguru
 faiss-cpu
 faiss-gpu
+memory-profiler
