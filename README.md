@@ -6,7 +6,7 @@
 
 A holistic self-supervised data cleaning strategy to detect irrelevant samples, near duplicates, and label errors.
 
-**Publications:** [SelfClean Paper](https://arxiv.org/abs/2305.17048) | [Data Cleaning Protocol Paper (ML4H24@NeurIPS)](https://arxiv.org/abs/2309.06961)
+**Publications:** [SelfClean Paper (NeurIPS24)](https://arxiv.org/abs/2305.17048) | [Data Cleaning Protocol Paper (ML4H23@NeurIPS)](https://arxiv.org/abs/2309.06961)
 
 **NOTE:** Make sure to have `git-lfs` installed before pulling the repository to ensure the pre-trained models are pulled correctly ([git-lfs install instructions](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage)).
 
