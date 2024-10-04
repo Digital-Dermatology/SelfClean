@@ -43,10 +43,11 @@ class IssueManager:
                         df[f"{k}_{i+1}"] = v[:, i]
                 else:
                     df[k] = v
+            col_name_indices = [c for c in df.columns if "indices" in c]
             for k, v in self.meta_data_dict.items():
                 if v is not None:
                     # for near duplicates there are multiple index columns
-                    for c_index in [c for c in df.columns if "indices" in c]:
+                    for c_index in col_name_indices:
                         if "_" in c_index:
                             df[f"{k}_{c_index}"] = df[c_index].apply(lambda x: v[x])
                         else:

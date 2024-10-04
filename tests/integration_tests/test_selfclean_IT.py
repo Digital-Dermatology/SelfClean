@@ -106,7 +106,7 @@ class TestSelfCleanIT(unittest.TestCase):
             epochs=1,
             num_workers=4,
         )
-        self._check_output(out_dict)
+        self._check_output(out_dict, check_path_exists=False)
 
     def test_run_with_plotting(self):
         fake_dataset = FakeData(size=20)
@@ -120,14 +120,39 @@ class TestSelfCleanIT(unittest.TestCase):
             epochs=1,
             num_workers=4,
         )
-        self._check_output(out_dict)
+        self._check_output(out_dict, check_path_exists=False)
 
     def _check_output(
         self,
         out_dict,
         issue_types=["irrelevants", "near_duplicates", "label_errors"],
+        check_path_exists: bool = True,
     ):
         for issue_type in issue_types:
+            # check the output dataframe
+            _df = out_dict.get_issues(issue_type, return_as_df=True)
+            self.assertTrue(
+                "indices" in _df.columns
+                or ("indices_1" in _df.columns and "indices_2" in _df.columns)
+            )
+            self.assertTrue("scores" in _df.columns)
+            if check_path_exists:
+                self.assertTrue(
+                    "path" in _df.columns
+                    or (
+                        "path_indices_1" in _df.columns
+                        and "path_indices_2" in _df.columns
+                    )
+                )
+            self.assertTrue(
+                "label" in _df.columns
+                or (
+                    "label_indices_1" in _df.columns
+                    and "label_indices_2" in _df.columns
+                )
+            )
+            self.assertEqual(_df.isna().sum().sum(), 0)
+            # check the output array
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)

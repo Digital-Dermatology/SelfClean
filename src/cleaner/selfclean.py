@@ -285,6 +285,10 @@ class SelfClean:
             paths = None
             if hasattr(dataset, "_image_files") and paths is None:
                 paths = dataset._image_files
+            elif hasattr(dataset, "imgs") and paths is None:
+                paths = [x[0] for x in dataset.imgs]
+            elif hasattr(dataset, "samples") and paths is None:
+                paths = [x[0] for x in dataset.samples]
 
             self.cleaner.fit(
                 emb_space=np.asarray(emb_space),
