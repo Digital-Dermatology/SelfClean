@@ -31,7 +31,7 @@ setup(
     name=PACKAGE_NAME,
     packages=proj_packages,
     package_dir={PACKAGE_NAME: SOURCE_DIRECTORY},
-    version="0.0.29",
+    version="0.0.30",
     author="Fabian Groeger",
     author_email="fabian.groeger@unibas.ch",
     description="A holistic self-supervised data cleaning strategy to detect irrelevant samples, near duplicates and label errors.",
@@ -41,6 +41,7 @@ setup(
     python_requires=">=3.6",
     install_requires=parse_requirements("requirements.txt"),
     setup_requires=parse_requirements("requirements.txt"),
+    extras_require={"approximate_nn": ["annoy"]},
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",

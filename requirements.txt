@@ -22,4 +22,3 @@ codecov
 jupyter
 loguru
 memory-profiler
-annoy

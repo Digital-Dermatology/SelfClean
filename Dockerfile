@@ -16,7 +16,9 @@ WORKDIR /workspace
 RUN mkdir /assets
 
 COPY requirements.txt /assets/requirements.txt
+COPY requirements.extras.txt /assets/requirements.extras.txt
 RUN pip install -r /assets/requirements.txt --upgrade --no-cache-dir
+RUN pip install -r /assets/requirements.extras.txt --upgrade --no-cache-dir
 
 COPY . /workspace/
 RUN git config --global --add safe.directory '*'
