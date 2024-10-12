@@ -13,10 +13,12 @@ class EmbeddingDistanceMixin(BaseNearDuplicateMixin):
     def __init__(
         self,
         approx_no_neighbors: int = 100,
+        tree_size: int = 100,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.approx_no_neighbors = approx_no_neighbors
+        self.tree_size = tree_size
 
     def get_near_duplicate_ranking(self) -> Tuple[np.ndarray, np.ndarray]:
         if self.memmap:
@@ -90,18 +92,30 @@ class EmbeddingDistanceMixin(BaseNearDuplicateMixin):
     def get_approx_near_duplicate_ranking(self):
         import copy
 
-        import faiss
         import pandas as pd
+        from annoy import AnnoyIndex
 
         # faiss expects all arrays to be `float32`
         _emb_space = copy.deepcopy(self.emb_space)
         _emb_space = _emb_space.astype("float32")
-        # create a `faiss` index with cosine distance
-        index = faiss.IndexFlat(self.D, faiss.METRIC_INNER_PRODUCT)
-        faiss.normalize_L2(_emb_space)
-        index.add(_emb_space)
+        # create a `annoy` index with cosine distance (angular)
+        annoy_index = AnnoyIndex(len(_emb_space[0]), "angular")
+        for idx, x in enumerate(_emb_space):
+            annoy_index.add_item(idx, x)
+        annoy_index.build(self.tree_size, n_jobs=-1)
         # search the nearest neighbors
-        distances, indices = index.search(_emb_space, self.approx_no_neighbors)
+        nn_results = [
+            annoy_index.get_nns_by_item(
+                i,
+                n=self.approx_no_neighbors,
+                include_distances=True,
+                search_k=-1,
+            )
+            for i in range(len(self.emb_space))
+        ]
+        indices = [x[0] for x in nn_results]
+        distances = [x[1] for x in nn_results]
+
         # create the return dataframe
         df = pd.DataFrame()
         df[[f"nn_idx_{x}" for x in range(self.approx_no_neighbors)]] = indices
@@ -109,5 +123,5 @@ class EmbeddingDistanceMixin(BaseNearDuplicateMixin):
         df = df.reindex(sorted(df.columns, key=lambda x: int(x.split("_")[-1])), axis=1)
         df = df.drop(columns=["nn_dist_0"])
         df = df.rename(columns={"nn_idx_0": "seed_idx"})
-        del _emb_space, index
+        del _emb_space, annoy_index
         return df

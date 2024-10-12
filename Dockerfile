@@ -6,6 +6,8 @@ RUN apt-get install -y libtcmalloc-minimal4
 RUN apt-get install -y libomp-dev
 RUN apt-get install -y sox
 RUN apt-get install -y git
+RUN apt-get install -y gcc g++ python3-dev python-dev
+RUN apt-get clean
 
 RUN pip install --upgrade pip
 
