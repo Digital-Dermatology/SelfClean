@@ -36,7 +36,11 @@ You can run SelfClean in a few lines of code:
 ```python
 from selfclean import SelfClean
 
-selfclean = SelfClean()
+selfclean = SelfClean(
+    # displays the top-7 images from each error type
+    # per default this option is disabled
+    plot_top_N=7, 
+)
 
 # run on pytorch dataset
 issues = selfclean.run_on_dataset(
