@@ -34,7 +34,7 @@ setup(
     version="0.0.31",
     author="Fabian Groeger",
     author_email="fabian.groeger@unibas.ch",
-    description="A holistic self-supervised data cleaning strategy to detect irrelevant samples, near duplicates and label errors.",
+    description="A holistic self-supervised data cleaning strategy to detect off-topic samples, near duplicates and label errors.",
     long_description=README_MD,
     long_description_content_type="text/markdown",
     url="https://github.com/Digital-Dermatology/SelfClean",

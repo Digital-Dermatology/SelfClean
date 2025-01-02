@@ -55,9 +55,9 @@ class TestSelfCleanIT(unittest.TestCase):
             work_dir=temp_work_dir.name,
             epochs=1,
             num_workers=4,
-            issues_to_detect=[IssueTypes.IRRELEVANTS],
+            issues_to_detect=[IssueTypes.OFF_TOPIC_SAMPLES],
         )
-        self._check_output(out_dict, issue_types=["irrelevants"])
+        self._check_output(out_dict, issue_types=["off_topic_samples"])
 
     def test_run_with_files_dino_wo_pretraining(self):
         selfclean = SelfClean()
@@ -125,7 +125,7 @@ class TestSelfCleanIT(unittest.TestCase):
     def _check_output(
         self,
         out_dict,
-        issue_types=["irrelevants", "near_duplicates", "label_errors"],
+        issue_types=["off_topic_samples", "near_duplicates", "label_errors"],
         check_path_exists: bool = True,
     ):
         for issue_type in issue_types:

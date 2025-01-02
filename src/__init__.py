@@ -1,7 +1,7 @@
 """
 SelfClean.
 
-A holistic self-supervised data cleaning strategy to detect irrelevant samples, near duplicates and label errors.
+A holistic self-supervised data cleaning strategy to detect off-topic samples, near duplicates and label errors.
 """
 
 __author__ = "Fabian Groeger"

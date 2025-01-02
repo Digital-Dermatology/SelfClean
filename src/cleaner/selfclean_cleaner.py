@@ -12,12 +12,12 @@ from tqdm.auto import tqdm
 
 from ..cleaner.auto_cleaning_mixin import AutoCleaningMixin
 from ..cleaner.base_cleaner import BaseCleaner
-from ..cleaner.irrelevants.lad_mixin import LADIrrelevantMixin
 from ..cleaner.issue_manager import IssueManager, IssueTypes
 from ..cleaner.label_errors.intra_extra_distance_mixin import (
     IntraExtraDistanceLabelErrorMixin,
 )
 from ..cleaner.near_duplicates.embedding_distance_mixin import EmbeddingDistanceMixin
+from ..cleaner.off_topic_samples.lad_mixin import LADOffTopicMixin
 from ..distances import *  # noqa: F401, F403
 from ..distances.projective_distance import *  # noqa: F401, F403
 from ..ssl_library.src.utils.logging import set_log_level
@@ -28,7 +28,7 @@ from ..utils.utils import triu_indices_memmap
 
 class SelfCleanCleaner(
     BaseCleaner,
-    LADIrrelevantMixin,
+    LADOffTopicMixin,
     EmbeddingDistanceMixin,
     IntraExtraDistanceLabelErrorMixin,
     AutoCleaningMixin,
@@ -196,7 +196,7 @@ class SelfCleanCleaner(
         self,
         issues_to_detect: List[IssueTypes] = [
             IssueTypes.NEAR_DUPLICATES,
-            IssueTypes.IRRELEVANTS,
+            IssueTypes.OFF_TOPIC_SAMPLES,
             IssueTypes.LABEL_ERRORS,
         ],
     ) -> IssueManager:
@@ -211,11 +211,11 @@ class SelfCleanCleaner(
             else:
                 approx_result_df = self.get_approx_near_duplicate_ranking()
                 return_dict["approx_near_duplicates"] = approx_result_df
-        if IssueTypes.IRRELEVANTS in issues_to_detect:
-            pred_irr_scores, pred_irr_indices = self.get_irrelevant_ranking()
-            return_dict["irrelevants"] = {
-                "indices": pred_irr_indices,
-                "scores": pred_irr_scores,
+        if IssueTypes.OFF_TOPIC_SAMPLES in issues_to_detect:
+            pred_ot_scores, pred_ot_indices = self.get_off_topic_ranking()
+            return_dict["off_topic_samples"] = {
+                "indices": pred_ot_indices,
+                "scores": pred_ot_scores,
             }
         if IssueTypes.LABEL_ERRORS in issues_to_detect:
             pred_lbl_errs_scores, pred_lbl_errs_indices = self.get_label_error_ranking()

@@ -7,7 +7,10 @@ from loguru import logger
 
 
 class IssueTypes(Enum):
+    # NOTE: We leave the accessability of "off-topic-samples"
+    # via "irrelevants" to ensure backwards compatibility
     IRRELEVANTS = "irrelevants"
+    OFF_TOPIC_SAMPLES = "off_topic_samples"
     NEAR_DUPLICATES = "near_duplicates"
     LABEL_ERRORS = "label_errors"
 
@@ -24,6 +27,10 @@ class IssueManager:
     ) -> Union[np.ndarray, pd.DataFrame, None]:
         if issue_type is type(IssueTypes):
             issue_type = issue_type.value
+
+        # NOTE: Backwards compatibility with "irrelevants"
+        if issue_type == "irrelevants":
+            issue_type = IssueTypes.OFF_TOPIC_SAMPLES.value
 
         sel_issues = self.issue_dict.get(issue_type, None)
         if sel_issues is None:

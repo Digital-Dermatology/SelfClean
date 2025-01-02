@@ -18,12 +18,12 @@ class TestIssueManager(unittest.TestCase):
         self.assertIsInstance(self.issues, IssueManager)
         self.assertEqual(
             sorted(list(self.issues.keys)),
-            sorted(["irrelevants", "near_duplicates", "label_errors"]),
+            sorted(["off_topic_samples", "near_duplicates", "label_errors"]),
         )
 
     def test_get(self):
         self.assertIsInstance(self.issues, IssueManager)
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             v = self.issues[issue_type]
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -34,7 +34,7 @@ class TestIssueManager(unittest.TestCase):
 
     def test_get_issues(self):
         self.assertIsInstance(self.issues, IssueManager)
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             v = self.issues.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -45,7 +45,7 @@ class TestIssueManager(unittest.TestCase):
 
     def test_get_issues_as_dataframe(self):
         self.assertIsInstance(self.issues, IssueManager)
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             df = self.issues.get_issues(issue_type, return_as_df=True)
             self.assertIsNotNone(df)
             if issue_type == "near_duplicates":

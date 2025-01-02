@@ -42,7 +42,7 @@ class TestSelfCleanCleaner(unittest.TestCase):
         if self.memory_profiling:
             cleaner.predict = profile(cleaner.predict, precision=4)
         out_dict = cleaner.predict()
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -56,7 +56,7 @@ class TestSelfCleanCleaner(unittest.TestCase):
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
         out_dict = cleaner.predict()
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -73,7 +73,7 @@ class TestSelfCleanCleaner(unittest.TestCase):
             class_labels=self.class_labels,
         )
         out_dict = cleaner.predict()
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -90,7 +90,7 @@ class TestSelfCleanCleaner(unittest.TestCase):
         )
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -102,7 +102,7 @@ class TestSelfCleanCleaner(unittest.TestCase):
         cleaner = SelfCleanCleaner(memmap=False)
         cleaner.fit(emb_space=self.emb_space)
         out_dict = cleaner.predict()
-        for issue_type in ["irrelevants", "near_duplicates"]:
+        for issue_type in ["off_topic_samples", "near_duplicates"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -117,7 +117,7 @@ class TestSelfCleanCleaner(unittest.TestCase):
         )
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -128,8 +128,8 @@ class TestSelfCleanCleaner(unittest.TestCase):
     def test_predict_single_issues(self):
         cleaner = SelfCleanCleaner(memmap=False)
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
-        out_dict = cleaner.predict(issues_to_detect=[IssueTypes.IRRELEVANTS])
-        for issue_type in ["irrelevants"]:
+        out_dict = cleaner.predict(issues_to_detect=[IssueTypes.OFF_TOPIC_SAMPLES])
+        for issue_type in ["off_topic_samples"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -156,7 +156,7 @@ class TestSelfCleanCleaner(unittest.TestCase):
             self.assertTrue("scores" in v)
             self.assertIsNotNone(v["indices"])
             self.assertIsNotNone(v["scores"])
-        for issue_type in ["irrelevants"]:
+        for issue_type in ["off_topic_samples"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNone(v)
 
@@ -173,7 +173,7 @@ class TestSelfCleanCleaner(unittest.TestCase):
             self.assertIsNotNone(v)
             self.assertEqual(len([x for x in v.columns if "nn_idx_" in x]), 10 - 1)
             self.assertEqual(len([x for x in v.columns if "nn_dist_" in x]), 10 - 1)
-        for issue_type in ["near_duplicates", "irrelevants", "label_errors"]:
+        for issue_type in ["near_duplicates", "off_topic_samples", "label_errors"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNone(v)
 

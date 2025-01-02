@@ -19,7 +19,7 @@ class AutoCleaningMixin:
     def __init__(
         self,
         auto_cleaning: bool = False,
-        irrelevant_cut_off: float = 0.01,
+        off_topic_cut_off: float = 0.01,
         near_duplicate_cut_off: float = 0.01,
         label_error_cut_off: float = 0.01,
         significance_level: float = 0.05,
@@ -28,7 +28,7 @@ class AutoCleaningMixin:
     ):
         super().__init__(**kwargs)
         self.auto_cleaning = auto_cleaning
-        self.irrelevant_cut_off = irrelevant_cut_off
+        self.off_topic_cut_off = off_topic_cut_off
         self.near_duplicate_cut_off = near_duplicate_cut_off
         self.label_error_cut_off = label_error_cut_off
         self.significance_level = significance_level
@@ -58,19 +58,19 @@ class AutoCleaningMixin:
                 )
                 return_dict["near_duplicates"]["auto_issues"] = issues_dup
 
-            # Irrelevant Samples
-            irrelevant_issues = issue_manger["irrelevants"]
-            if irrelevant_issues is not None:
+            # Off-Topic Samples
+            off_topic_issues = issue_manger["off_topic_samples"]
+            if off_topic_issues is not None:
                 if output_path is not None:
                     self.cleaner_kwargs["path"] = (
                         f"{output_path.stem}_auto_oods{output_path.suffix}"
                     )
-                self.cleaner_kwargs["alpha"] = self.irrelevant_cut_off
-                issues_ood = self.fraction_cut(
-                    scores=irrelevant_issues["scores"],
+                self.cleaner_kwargs["alpha"] = self.off_topic_cut_off
+                issues_ot = self.fraction_cut(
+                    scores=off_topic_issues["scores"],
                     **self.cleaner_kwargs,
                 )
-                return_dict["irrelevants"]["auto_issues"] = issues_ood
+                return_dict["off_topic_samples"]["auto_issues"] = issues_ot
 
             # Label Errors
             label_error_issues = issue_manger["label_errors"]

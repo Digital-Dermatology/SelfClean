@@ -14,7 +14,7 @@ class TestAutoCleaning(unittest.TestCase):
         cleaner = SelfCleanCleaner(memmap=False, auto_cleaning=False)
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -27,7 +27,7 @@ class TestAutoCleaning(unittest.TestCase):
         cleaner = SelfCleanCleaner(memmap=False, auto_cleaning=True)
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -41,7 +41,7 @@ class TestAutoCleaning(unittest.TestCase):
         cleaner = SelfCleanCleaner(memmap=False, auto_cleaning=True)
         cleaner.fit(emb_space=self.emb_space)
         out_dict = cleaner.predict()
-        for issue_type in ["irrelevants", "near_duplicates"]:
+        for issue_type in ["off_topic_samples", "near_duplicates"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -56,7 +56,7 @@ class TestAutoCleaning(unittest.TestCase):
         )
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             v = out_dict.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -70,7 +70,7 @@ class TestAutoCleaning(unittest.TestCase):
         cleaner = SelfCleanCleaner(
             memmap=False,
             auto_cleaning=True,
-            irrelevant_cut_off=0.01,
+            off_topic_cut_off=0.01,
             near_duplicate_cut_off=0.01,
             label_error_cut_off=0.01,
             significance_level=0.01,
@@ -78,12 +78,12 @@ class TestAutoCleaning(unittest.TestCase):
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         out_dict = cleaner.predict()
 
-        cleaner.irrelevant_cut_off = 0.5
+        cleaner.off_topic_cut_off = 0.5
         cleaner.near_duplicate_cut_off = 0.5
         cleaner.label_error_cut_off = 0.5
         out_dict2 = cleaner.predict()
 
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             v1 = out_dict.get_issues(issue_type)
             v2 = out_dict2.get_issues(issue_type)
             self.assertTrue((v1["indices"] == v2["indices"]).all())
