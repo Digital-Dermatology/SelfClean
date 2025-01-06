@@ -84,6 +84,10 @@ DOCKER_CMD := docker run $(DOCKER_ARGS) $(GPU_ARGS) $(DOCKER_CONTAINER_NAME) -it
 ###########################
 # PROJECT UTILS
 ###########################
+.PHONY: init
+init:  ##@Utils initializes the project and pulls all the nessecary data
+	@git submodule update --init --recursive
+
 .PHONY: install
 install:  ##@Utils install the dependencies for the project
 	@python3 -m pip install -r requirements.txt
