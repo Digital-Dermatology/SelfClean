@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from src.cleaner.selfclean_cleaner import SelfCleanCleaner
+from selfclean.cleaner.selfclean_cleaner import SelfCleanCleaner
 
 
 class TestNearDuplicateDistance(unittest.TestCase):

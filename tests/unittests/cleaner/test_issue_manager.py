@@ -2,8 +2,8 @@ import unittest
 
 import numpy as np
 
-from src.cleaner.issue_manager import IssueManager
-from src.cleaner.selfclean_cleaner import SelfCleanCleaner
+from selfclean.cleaner.issue_manager import IssueManager
+from selfclean.cleaner.selfclean_cleaner import SelfCleanCleaner
 
 
 class TestIssueManager(unittest.TestCase):

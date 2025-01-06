@@ -3,9 +3,9 @@ import unittest
 import numpy as np
 from memory_profiler import profile
 
-from src.cleaner.base_cleaner import BaseCleaner
-from src.cleaner.issue_manager import IssueTypes
-from src.cleaner.selfclean_cleaner import SelfCleanCleaner
+from selfclean.cleaner.base_cleaner import BaseCleaner
+from selfclean.cleaner.issue_manager import IssueTypes
+from selfclean.cleaner.selfclean_cleaner import SelfCleanCleaner
 
 
 class TestSelfCleanCleaner(unittest.TestCase):

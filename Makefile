@@ -93,6 +93,10 @@ install:  ##@Utils install the dependencies for the project
 	@python3 -m pip install -r requirements.txt
 	@pre-commit install
 
+.PHONY: update_dependencies
+update_dependencies:  ##@Utils updates the dependencies for the project in the toml file
+	@python3.9 -m update_dependencies
+
 .PHONY: clean
 clean:  ##@Utils clean the project
 	@black .
@@ -130,8 +134,8 @@ start_jupyter: _build  ##@Docker start a jupyter notebook inside the docker imag
 ###########################
 .PHONY: test
 test: _build  ##@Test run all tests in the project
-	$(DOCKER_CMD) /bin/bash -c "python3 -m coverage run -m pytest tests --junitxml=report.xml; coverage report -i --include=src/* --omit="src/ssl_library/*"; coverage xml -i --include=src/* --omit="src/ssl_library/*";"
+	$(DOCKER_CMD) /bin/bash -c "python3 -m coverage run -m pytest tests --junitxml=report.xml; coverage report -i --include=selfclean/* --omit="selfclean/ssl_library/*"; coverage xml -i --include=selfclean/* --omit="selfclean/ssl_library/*";"
 
 .PHONY: unittest
 unittest: _build  ##@Test run all unittests in the project
-	$(DOCKER_CMD) /bin/bash -c "python3 -m coverage run -m pytest tests --junitxml=report.xml --ignore=tests/integration_tests; coverage report -i --include=src/* --omit="src/ssl_library/*"; coverage xml -i --include=src/* --omit="src/ssl_library/*";"
+	$(DOCKER_CMD) /bin/bash -c "python3 -m coverage run -m pytest tests --junitxml=report.xml --ignore=tests/integration_tests; coverage report -i --include=selfclean/* --omit="selfclean/ssl_library/*"; coverage xml -i --include=selfclean/* --omit="selfclean/ssl_library/*";"

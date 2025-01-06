@@ -7,8 +7,8 @@ from pathlib import Path
 
 from torchvision.datasets import FakeData
 
-from src.cleaner.issue_manager import IssueTypes
-from src.cleaner.selfclean import PretrainingType, SelfClean
+from selfclean.cleaner.issue_manager import IssueTypes
+from selfclean.cleaner.selfclean import PretrainingType, SelfClean
 from tests.testutils.paths import testfiles_path
 
 
