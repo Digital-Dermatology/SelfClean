@@ -14,7 +14,8 @@ darglint>=1.8
 isort>=5.10
 pre-commit>=2.20
 pytest-cov>=3
-transformers
+safetensors==0.3.1
+transformers[torch]
 seaborn
 SciencePlots
 scikit-image
