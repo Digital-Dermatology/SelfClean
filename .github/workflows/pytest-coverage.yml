@@ -49,8 +49,8 @@ jobs:
             - name: Run pytest with coverage
               run: |
                   python3 -m coverage run -m pytest tests --junitxml=report.xml --ignore=tests/integration_tests
-                  coverage report -i --include=src/* --omit="src/ssl_library/*"
-                  coverage xml -i --include=src/* --omit="src/ssl_library/*"
+                  coverage report -i --include=selfclean/* --omit="selfclean/ssl_library/*"
+                  coverage xml -i --include=selfclean/* --omit="selfclean/ssl_library/*"
                   codecov
 
             - name: Upload coverage reports to Codecov

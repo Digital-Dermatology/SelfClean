@@ -75,6 +75,5 @@ class TestIssueManager(unittest.TestCase):
             self.assertEqual(len(v["indices"]), len(v["scores"]))
 
 
-
 if __name__ == "__main__":
     unittest.main()
