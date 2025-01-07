@@ -3,40 +3,30 @@ requires = [ "setuptools>=42", "wheel",]
 build-backend = "setuptools.build_meta"
 
 [project]
-version = "0.0.34"
+version = "0.0.35"
 name = "selfclean"
 description = "A holistic self-supervised data cleaning strategy to detect off-topic samples, near duplicates and label errors."
 readme = "README.md"
-keywords = [
-  "machine_learning",
-  "data_cleaning",
-  "datacentric_ai",
-  "datacentric",
-  "self-supervised learning",
-]
+keywords = [ "machine_learning", "data_cleaning", "datacentric_ai", "datacentric", "self-supervised learning",]
 requires-python = ">=3.6"
 classifiers = [ "Programming Language :: Python :: 3", "Operating System :: OS Independent",]
 dependencies = [ "SciencePlots", "black>=22.6", "codecov", "coverage>=6", "darglint>=1.8", "einops", "isort>=5.10", "jupyter", "loguru", "matplotlib", "memory-profiler", "numpy", "pandas", "pre-commit>=2.20", "pytest", "pytest-cov>=3", "scikit-image", "scikit_learn", "seaborn", "torchinfo", "torchmetrics", "torchvision", "tqdm", "transformers[torch]==4.27.4",]
-authors = [
-    { name = "Fabian Gröger", email = "fabian.groeger@unibas.ch" },
-]
-
-[tool.setuptools]
-include-package-data = true
+[[project.authors]]
+name = "Fabian Gröger"
+email = "fabian.groeger@unibas.ch"
 
 [project.license]
 text = "Attribution-NonCommercial 4.0 International"
 
 [project.optional-dependencies]
-approximate_nn = [ "annoy"]
+approximate_nn = [ "annoy",]
 
 [project.urls]
 Homepage = "https://selfclean.github.io/"
 "Source Code" = "https://github.com/Digital-Dermatology/SelfClean"
 
-[tool.setuptools.packages.find]
-include = ["selfclean*", "selfclean.*"]
-exclude = ["tests*", "tests.*", "*.tests", "*.tests.*", "*.tests*"]
+[tool.setuptools]
+include-package-data = true
 
 [tool.black]
 include = "\\.pyi?$"
@@ -52,3 +42,7 @@ known_thirdparty = [ "wandb",]
 log_cli = false
 log_cli_level = "INFO"
 log_cli_format = "%(time)s :: %(name)s :: %(message)s"
+
+[tool.setuptools.packages.find]
+include = [ "selfclean*", "selfclean.*",]
+exclude = [ "tests*", "tests.*", "*.tests", "*.tests.*", "*.tests*",]

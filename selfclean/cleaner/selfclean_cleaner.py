@@ -170,20 +170,7 @@ class SelfCleanCleaner(
             )
             triu_indices = np.triu_indices(self.N, k=1)
         # create the upper triangular matrix of the distance matrix
-        chunk_size = int(self.chunk_size * (self.chunk_size - 1) / 2)
-        n_chunks = math.ceil(len(triu_indices[0]) / chunk_size)
-        iterator = range(0, len(triu_indices[0]), chunk_size)
-        for start_idx in (
-            tqdm(
-                iterator,
-                desc="Creating upper triangular distance matrix",
-                total=n_chunks,
-                position=0,
-                leave=True,
-            )
-            if self.log_level == "DEBUG"
-            else iterator
-        ):
+        for start_idx in range(0, len(triu_indices[0]), self.chunk_size):
             end_idx = min(start_idx + self.chunk_size, len(triu_indices[0]))
             self.p_distances[start_idx:end_idx] = self.distance_matrix[
                 triu_indices[0][start_idx:end_idx], triu_indices[1][start_idx:end_idx]

@@ -25,6 +25,9 @@ class TestSelfCleanCleaner(unittest.TestCase):
         self.assertIsInstance(cleaner, BaseCleaner)
         self.assertIsNotNone(cleaner.distance_matrix)
         self.assertIsNotNone(cleaner.p_distances)
+        self.assertTrue(
+            np.all(np.unique(cleaner.p_distances, return_counts=True)[-1] == 1)
+        )
 
     def test_fit_with_memmaps(self):
         cleaner = SelfCleanCleaner(memmap=True)
@@ -33,6 +36,9 @@ class TestSelfCleanCleaner(unittest.TestCase):
         cleaner.fit(emb_space=self.emb_space, labels=self.labels)
         self.assertIsNotNone(cleaner.distance_matrix)
         self.assertIsNotNone(cleaner.p_distances)
+        self.assertTrue(
+            np.all(np.unique(cleaner.p_distances, return_counts=True)[-1] == 1)
+        )
 
     def test_predict(self):
         cleaner = SelfCleanCleaner(memmap=False)
