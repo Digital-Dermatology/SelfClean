@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
-from src.utils.utils import triu_indices_memmap
+from selfclean.utils.utils import triu_indices_memmap
 
 
 class TestUtils(unittest.TestCase):

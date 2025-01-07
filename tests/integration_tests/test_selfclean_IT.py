@@ -5,10 +5,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import numpy as np
 from torchvision.datasets import FakeData
 
-from src.cleaner.issue_manager import IssueTypes
-from src.cleaner.selfclean import PretrainingType, SelfClean
+from selfclean.cleaner.issue_manager import IssueManager, IssueTypes
+from selfclean.cleaner.selfclean import PretrainingType, SelfClean
 from tests.testutils.paths import testfiles_path
 
 
@@ -32,7 +33,7 @@ class TestSelfCleanIT(unittest.TestCase):
             epochs=1,
             num_workers=4,
         )
-        self._check_output(out_dict)
+        self._check_output(selfclean, out_dict)
 
     def test_run_with_files_dino_with_output_path(self):
         temp_work_dir = tempfile.TemporaryDirectory()
@@ -44,7 +45,7 @@ class TestSelfCleanIT(unittest.TestCase):
             epochs=1,
             num_workers=4,
         )
-        self._check_output(out_dict)
+        self._check_output(selfclean, out_dict)
 
     def test_run_with_files_dino_single_issue_type(self):
         temp_work_dir = tempfile.TemporaryDirectory()
@@ -55,9 +56,9 @@ class TestSelfCleanIT(unittest.TestCase):
             work_dir=temp_work_dir.name,
             epochs=1,
             num_workers=4,
-            issues_to_detect=[IssueTypes.IRRELEVANTS],
+            issues_to_detect=[IssueTypes.OFF_TOPIC_SAMPLES],
         )
-        self._check_output(out_dict, issue_types=["irrelevants"])
+        self._check_output(selfclean, out_dict, issue_types=["off_topic_samples"])
 
     def test_run_with_files_dino_wo_pretraining(self):
         selfclean = SelfClean()
@@ -67,7 +68,7 @@ class TestSelfCleanIT(unittest.TestCase):
             ssl_pre_training=False,
             num_workers=4,
         )
-        self._check_output(out_dict)
+        self._check_output(selfclean, out_dict)
 
     def test_run_with_files_dino(self):
         selfclean = SelfClean()
@@ -77,7 +78,7 @@ class TestSelfCleanIT(unittest.TestCase):
             epochs=1,
             num_workers=4,
         )
-        self._check_output(out_dict)
+        self._check_output(selfclean, out_dict)
 
     def test_run_with_files_imagenet(self):
         selfclean = SelfClean()
@@ -86,7 +87,7 @@ class TestSelfCleanIT(unittest.TestCase):
             pretraining_type=PretrainingType.IMAGENET,
             num_workers=4,
         )
-        self._check_output(out_dict)
+        self._check_output(selfclean, out_dict)
 
     def test_run_with_files_imagenet_vit(self):
         selfclean = SelfClean()
@@ -96,7 +97,7 @@ class TestSelfCleanIT(unittest.TestCase):
             epochs=1,
             num_workers=4,
         )
-        self._check_output(out_dict)
+        self._check_output(selfclean, out_dict)
 
     def test_run_with_dataset(self):
         fake_dataset = FakeData(size=20)
@@ -106,7 +107,7 @@ class TestSelfCleanIT(unittest.TestCase):
             epochs=1,
             num_workers=4,
         )
-        self._check_output(out_dict, check_path_exists=False)
+        self._check_output(selfclean, out_dict, check_path_exists=False)
 
     def test_run_with_plotting(self):
         fake_dataset = FakeData(size=20)
@@ -120,14 +121,20 @@ class TestSelfCleanIT(unittest.TestCase):
             epochs=1,
             num_workers=4,
         )
-        self._check_output(out_dict, check_path_exists=False)
+        self._check_output(selfclean, out_dict, check_path_exists=False)
 
     def _check_output(
         self,
-        out_dict,
-        issue_types=["irrelevants", "near_duplicates", "label_errors"],
+        selfclean: SelfClean,
+        out_dict: IssueManager,
+        issue_types=["off_topic_samples", "near_duplicates", "label_errors"],
         check_path_exists: bool = True,
     ):
+        self.assertTrue(
+            np.all(
+                np.unique(selfclean.cleaner.p_distances, return_counts=True)[-1] == 1
+            )
+        )
         for issue_type in issue_types:
             # check the output dataframe
             _df = out_dict.get_issues(issue_type, return_as_df=True)

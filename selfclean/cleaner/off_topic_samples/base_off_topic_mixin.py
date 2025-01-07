@@ -4,7 +4,7 @@ from typing import Tuple
 import numpy as np
 
 
-class BaseIrrelevantMixin(ABC):
+class BaseOffTopicMixin(ABC):
     @abstractmethod
-    def get_irrelevant_ranking(self) -> Tuple[np.ndarray, np.ndarray]:
+    def get_off_topic_ranking(self) -> Tuple[np.ndarray, np.ndarray]:
         raise NotImplementedError()

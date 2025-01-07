@@ -12,12 +12,12 @@ from tqdm.auto import tqdm
 
 from ..cleaner.auto_cleaning_mixin import AutoCleaningMixin
 from ..cleaner.base_cleaner import BaseCleaner
-from ..cleaner.irrelevants.lad_mixin import LADIrrelevantMixin
 from ..cleaner.issue_manager import IssueManager, IssueTypes
 from ..cleaner.label_errors.intra_extra_distance_mixin import (
     IntraExtraDistanceLabelErrorMixin,
 )
 from ..cleaner.near_duplicates.embedding_distance_mixin import EmbeddingDistanceMixin
+from ..cleaner.off_topic_samples.lad_mixin import LADOffTopicMixin
 from ..distances import *  # noqa: F401, F403
 from ..distances.projective_distance import *  # noqa: F401, F403
 from ..ssl_library.src.utils.logging import set_log_level
@@ -28,7 +28,7 @@ from ..utils.utils import triu_indices_memmap
 
 class SelfCleanCleaner(
     BaseCleaner,
-    LADIrrelevantMixin,
+    LADOffTopicMixin,
     EmbeddingDistanceMixin,
     IntraExtraDistanceLabelErrorMixin,
     AutoCleaningMixin,
@@ -170,20 +170,7 @@ class SelfCleanCleaner(
             )
             triu_indices = np.triu_indices(self.N, k=1)
         # create the upper triangular matrix of the distance matrix
-        chunk_size = int(self.chunk_size * (self.chunk_size - 1) / 2)
-        n_chunks = math.ceil(len(triu_indices[0]) / chunk_size)
-        iterator = range(0, len(triu_indices[0]), chunk_size)
-        for start_idx in (
-            tqdm(
-                iterator,
-                desc="Creating upper triangular distance matrix",
-                total=n_chunks,
-                position=0,
-                leave=True,
-            )
-            if self.log_level == "DEBUG"
-            else iterator
-        ):
+        for start_idx in range(0, len(triu_indices[0]), self.chunk_size):
             end_idx = min(start_idx + self.chunk_size, len(triu_indices[0]))
             self.p_distances[start_idx:end_idx] = self.distance_matrix[
                 triu_indices[0][start_idx:end_idx], triu_indices[1][start_idx:end_idx]
@@ -196,7 +183,7 @@ class SelfCleanCleaner(
         self,
         issues_to_detect: List[IssueTypes] = [
             IssueTypes.NEAR_DUPLICATES,
-            IssueTypes.IRRELEVANTS,
+            IssueTypes.OFF_TOPIC_SAMPLES,
             IssueTypes.LABEL_ERRORS,
         ],
     ) -> IssueManager:
@@ -211,11 +198,11 @@ class SelfCleanCleaner(
             else:
                 approx_result_df = self.get_approx_near_duplicate_ranking()
                 return_dict["approx_near_duplicates"] = approx_result_df
-        if IssueTypes.IRRELEVANTS in issues_to_detect:
-            pred_irr_scores, pred_irr_indices = self.get_irrelevant_ranking()
-            return_dict["irrelevants"] = {
-                "indices": pred_irr_indices,
-                "scores": pred_irr_scores,
+        if IssueTypes.OFF_TOPIC_SAMPLES in issues_to_detect:
+            pred_ot_scores, pred_ot_indices = self.get_off_topic_ranking()
+            return_dict["off_topic_samples"] = {
+                "indices": pred_ot_indices,
+                "scores": pred_ot_scores,
             }
         if IssueTypes.LABEL_ERRORS in issues_to_detect:
             pred_lbl_errs_scores, pred_lbl_errs_indices = self.get_label_error_ranking()

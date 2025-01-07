@@ -4,7 +4,7 @@
 
 ![SelfClean Teaser](https://github.com/Digital-Dermatology/SelfClean/raw/main/assets/SelfClean_Teaser.png)
 
-A holistic self-supervised data cleaning strategy to detect irrelevant samples, near duplicates, and label errors.
+A holistic self-supervised data cleaning strategy to detect off-topic samples, near duplicates, and label errors.
 
 **Publications:** [SelfClean Paper (NeurIPS24)](https://arxiv.org/abs/2305.17048) | [Data Cleaning Protocol Paper (ML4H23@NeurIPS)](https://arxiv.org/abs/2309.06961)
 
@@ -39,7 +39,7 @@ from selfclean import SelfClean
 selfclean = SelfClean(
     # displays the top-7 images from each error type
     # per default this option is disabled
-    plot_top_N=7, 
+    plot_top_N=7,
 )
 
 # run on pytorch dataset
@@ -53,7 +53,7 @@ issues = selfclean.run_on_image_folder(
 
 # get the data quality issue rankings
 df_near_duplicates = issues.get_issues("near_duplicates", return_as_df=True)
-df_irrelevants = issues.get_issues("irrelevants", return_as_df=True)
+df_off_topic_samples = issues.get_issues("off_topic_samples", return_as_df=True)
 df_label_errors = issues.get_issues("label_errors", return_as_df=True)
 ```
 

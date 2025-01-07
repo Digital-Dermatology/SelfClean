@@ -137,7 +137,7 @@ class SelfClean:
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         issues_to_detect: List[IssueTypes] = [
             IssueTypes.NEAR_DUPLICATES,
-            IssueTypes.IRRELEVANTS,
+            IssueTypes.OFF_TOPIC_SAMPLES,
             IssueTypes.LABEL_ERRORS,
         ],
         # embedding
@@ -185,7 +185,7 @@ class SelfClean:
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         issues_to_detect: List[IssueTypes] = [
             IssueTypes.NEAR_DUPLICATES,
-            IssueTypes.IRRELEVANTS,
+            IssueTypes.OFF_TOPIC_SAMPLES,
             IssueTypes.LABEL_ERRORS,
         ],
         # embedding
@@ -229,7 +229,7 @@ class SelfClean:
         hyperparameters: dict = DINO_STANDARD_HYPERPARAMETERS,
         issues_to_detect: List[IssueTypes] = [
             IssueTypes.NEAR_DUPLICATES,
-            IssueTypes.IRRELEVANTS,
+            IssueTypes.OFF_TOPIC_SAMPLES,
             IssueTypes.LABEL_ERRORS,
         ],
         # embedding

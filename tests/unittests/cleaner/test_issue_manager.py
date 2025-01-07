@@ -2,8 +2,8 @@ import unittest
 
 import numpy as np
 
-from src.cleaner.issue_manager import IssueManager
-from src.cleaner.selfclean_cleaner import SelfCleanCleaner
+from selfclean.cleaner.issue_manager import IssueManager
+from selfclean.cleaner.selfclean_cleaner import SelfCleanCleaner
 
 
 class TestIssueManager(unittest.TestCase):
@@ -18,12 +18,12 @@ class TestIssueManager(unittest.TestCase):
         self.assertIsInstance(self.issues, IssueManager)
         self.assertEqual(
             sorted(list(self.issues.keys)),
-            sorted(["irrelevants", "near_duplicates", "label_errors"]),
+            sorted(["off_topic_samples", "near_duplicates", "label_errors"]),
         )
 
     def test_get(self):
         self.assertIsInstance(self.issues, IssueManager)
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             v = self.issues[issue_type]
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -34,7 +34,7 @@ class TestIssueManager(unittest.TestCase):
 
     def test_get_issues(self):
         self.assertIsInstance(self.issues, IssueManager)
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             v = self.issues.get_issues(issue_type)
             self.assertIsNotNone(v)
             self.assertTrue("indices" in v)
@@ -45,7 +45,7 @@ class TestIssueManager(unittest.TestCase):
 
     def test_get_issues_as_dataframe(self):
         self.assertIsInstance(self.issues, IssueManager)
-        for issue_type in ["irrelevants", "near_duplicates", "label_errors"]:
+        for issue_type in ["off_topic_samples", "near_duplicates", "label_errors"]:
             df = self.issues.get_issues(issue_type, return_as_df=True)
             self.assertIsNotNone(df)
             if issue_type == "near_duplicates":
@@ -62,6 +62,18 @@ class TestIssueManager(unittest.TestCase):
     def test_get_wrong(self):
         self.assertIsInstance(self.issues, IssueManager)
         self.assertIsNone(self.issues["irr"])
+
+    def test_backwards_compatibility_get_irrelevant_samples(self):
+        self.assertIsInstance(self.issues, IssueManager)
+        for issue_type in ["irrelevants"]:
+            v = self.issues.get_issues(issue_type)
+            self.assertIsNotNone(v)
+            self.assertTrue("indices" in v)
+            self.assertTrue("scores" in v)
+            self.assertIsNotNone(v["indices"])
+            self.assertIsNotNone(v["scores"])
+            self.assertEqual(len(v["indices"]), len(v["scores"]))
+
 
 
 if __name__ == "__main__":

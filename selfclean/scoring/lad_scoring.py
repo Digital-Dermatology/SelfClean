@@ -41,7 +41,7 @@ class LAD:
         leaf_dist = None
         white_spaces = []
         scores = []
-        progress_bar = tqdm(desc="Processing possible irrelevant samples")
+        progress_bar = tqdm(desc="Processing possible off-topic samples")
         rootnode = hierarchy.to_tree(linkage_matrix)
 
         NodeElement = namedtuple(

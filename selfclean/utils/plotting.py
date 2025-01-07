@@ -41,9 +41,9 @@ def plot_inspection_result(
             ax[ax_idx + 1, i].set_title(f"Idx: {int(idx2)}", fontsize=6)
         ax_idx += 2
 
-    irrelevant_issues = issue_manger["irrelevants"]
-    if irrelevant_issues is not None:
-        for i, idx in enumerate(irrelevant_issues["indices"][:plot_top_N]):
+    off_topic_issues = issue_manger["off_topic_samples"]
+    if off_topic_issues is not None:
+        for i, idx in enumerate(off_topic_issues["indices"][:plot_top_N]):
             ax[ax_idx, i].imshow(
                 transforms.ToPILImage()(denormalize_image(dataset[int(idx)][0]))
             )
@@ -76,11 +76,11 @@ def plot_inspection_result(
             fontsize=12,
         )
         ax_idx += 2
-    if irrelevant_issues is not None:
+    if off_topic_issues is not None:
         create_subtitle(
             fig,
             grid[ax_idx, ::],
-            "Irrelevant Samples Ranking",
+            "Off-Topic Samples Ranking",
             fontsize=12,
         )
         ax_idx += 1
