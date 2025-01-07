@@ -63,6 +63,18 @@ class TestIssueManager(unittest.TestCase):
         self.assertIsInstance(self.issues, IssueManager)
         self.assertIsNone(self.issues["irr"])
 
+    def test_backwards_compatibility_get_irrelevant_samples(self):
+        self.assertIsInstance(self.issues, IssueManager)
+        for issue_type in ["irrelevants"]:
+            v = self.issues.get_issues(issue_type)
+            self.assertIsNotNone(v)
+            self.assertTrue("indices" in v)
+            self.assertTrue("scores" in v)
+            self.assertIsNotNone(v["indices"])
+            self.assertIsNotNone(v["scores"])
+            self.assertEqual(len(v["indices"]), len(v["scores"]))
+
+
 
 if __name__ == "__main__":
     unittest.main()
