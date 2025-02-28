@@ -58,13 +58,33 @@ df_label_errors = issues.get_issues("label_errors", return_as_df=True)
 ```
 
 **Examples:**
-In `examples/`, we've provided some example notebooks in which you will learn how to analyze and clean datasets using SelfClean.
+In `examples/`, we've provided some example notebooks where you will learn how to analyze and clean datasets using SelfClean.
 These examples analyze different benchmark datasets such as:
 
 - <a href="https://github.com/fastai/imagenette">Imagenette</a> 🖼️ (Open in <a href="https://nbviewer.org/github/Digital-Dermatology/SelfClean/blob/main/examples/Investigate_Imagenette.ipynb">NBViewer</a> | <a href="https://github.com/Digital-Dermatology/SelfClean/blob/main/examples/Investigate_Imagenette.ipynb">GitHub</a> | <a href="https://colab.research.google.com/github/Digital-Dermatology/SelfClean/blob/main/examples/Investigate_Imagenette.ipynb">Colab</a>)
 - <a href="https://www.robots.ox.ac.uk/~vgg/data/pets/">Oxford-IIIT Pet</a> 🐶 (Open in <a href="https://nbviewer.org/github/Digital-Dermatology/SelfClean/blob/main/examples/Investigate_OxfordIIITPet.ipynb">NBViewer</a> | <a href="https://github.com/Digital-Dermatology/SelfClean/blob/main/examples/Investigate_OxfordIIITPet.ipynb">GitHub</a> | <a href="https://colab.research.google.com/github/Digital-Dermatology/SelfClean/blob/main/examples/Investigate_OxfordIIITPet.ipynb">Colab</a>)
 
 Also, check out our <a href="https://www.kaggle.com/code/fabiangrger/removing-the-psychic-from-the-dataset">Kaggle notebook</a> to see an illustration of how to get a gold medal for cleaning a competition dataset.
+
+## More Ressources
+
+- [Recording of the Computer Vision Meetup: Intrinsic Self-Supervision for Data Quality Audits​](https://www.youtube.com/watch?v=mxHP7glU5Go)
+- [Are We Measuring What We Think We Are? The Perils of Contaminated Benchmark Datasets](https://medium.com/voxel51/are-we-measuring-what-we-think-we-are-the-perils-of-contaminated-benchmark-datasets-037c61932d82)
+- [Detecting Near Duplicates, Label Errors and Outliers in Image Datasets](https://medium.com/@gafner99/detecting-near-duplicates-to-label-errors-and-outliers-in-image-dataset-c6c8f9195a9c)
+
+## Reference
+If you find this repository useful for your research, please cite the following work.
+
+```bib
+@article{groger_selfclean_2024,
+  title        = {{Intrinsic Self-Supervision for Data Quality Audits}},
+  shorttitle   = {{SelfClean}},
+  author       = {Gr\"oger, Fabian and Lionetti, Simone and Gottfrois, Philippe and Gonzalez-Jimenez, Alvaro and Amruthalingam, Ludovic and Consortium, Labelling and Groh, Matthew and Navarini, Alexander A. and Pouly, Marc},
+  year         = 2024,
+  month        = 12,
+  journal      = {Advances in Neural Information Processing Systems (NeurIPS)},
+}
+```
 
 ## Development Environment
 Run `make` for a list of possible targets.
