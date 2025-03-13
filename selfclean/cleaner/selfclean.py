@@ -14,11 +14,11 @@ from torchvision.transforms import InterpolationMode
 
 from ..cleaner.issue_manager import IssueTypes
 from ..cleaner.selfclean_cleaner import SelfCleanCleaner
-from ..ssl_library.src.augmentations.multi_crop import MultiCropAugmentation
-from ..ssl_library.src.pkg import Embedder, embed_dataset
-from ..ssl_library.src.trainers.dino_trainer import DINOTrainer
-from ..ssl_library.src.utils.logging import set_log_level
-from ..ssl_library.src.utils.utils import (
+from ..core.src.augmentations.multi_crop import MultiCropAugmentation
+from ..core.src.pkg import Embedder, embed_dataset
+from ..core.src.trainers.dino_trainer import DINOTrainer
+from ..core.src.utils.logging import set_log_level
+from ..core.src.utils.utils import (
     cleanup,
     fix_random_seeds,
     init_distributed_mode,

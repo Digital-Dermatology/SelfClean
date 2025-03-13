@@ -20,8 +20,8 @@ from ..cleaner.near_duplicates.embedding_distance_mixin import EmbeddingDistance
 from ..cleaner.off_topic_samples.lad_mixin import LADOffTopicMixin
 from ..distances import *  # noqa: F401, F403
 from ..distances.projective_distance import *  # noqa: F401, F403
-from ..ssl_library.src.utils.logging import set_log_level
-from ..ssl_library.src.utils.utils import fix_random_seeds
+from ..core.src.utils.logging import set_log_level
+from ..core.src.utils.utils import fix_random_seeds
 from ..utils.plotting import plot_inspection_result
 from ..utils.utils import triu_indices_memmap
 

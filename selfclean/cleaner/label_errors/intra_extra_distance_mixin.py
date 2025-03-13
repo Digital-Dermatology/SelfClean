@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 import numpy as np
 
 from ...cleaner.label_errors.base_label_error_mixin import BaseLabelErrorMixin
-from ...ssl_library.src.utils.logging import plot_dist
+from ...core.src.utils.plotting import plot_dist
 from ...utils.utils import has_same_label
 
 

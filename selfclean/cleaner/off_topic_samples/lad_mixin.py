@@ -5,7 +5,7 @@ from scipy.cluster.hierarchy import single
 
 from ...cleaner.off_topic_samples.base_off_topic_mixin import BaseOffTopicMixin
 from ...scoring.lad_scoring import LAD
-from ...ssl_library.src.utils.logging import plot_dist
+from ...core.src.utils.plotting import plot_dist
 
 
 class LADOffTopicMixin(BaseOffTopicMixin):

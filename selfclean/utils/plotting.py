@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 
 from ..cleaner.issue_manager import IssueManager
-from ..ssl_library.src.utils.logging import create_subtitle, denormalize_image
+from ..core.src.utils.plotting import create_subtitle, denormalize_image
 
 
 def plot_inspection_result(

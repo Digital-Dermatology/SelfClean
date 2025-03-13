@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 
 from ...cleaner.off_topic_samples.base_off_topic_mixin import BaseOffTopicMixin
-from ...ssl_library.src.utils.logging import plot_dist
+from ...core.src.utils.plotting import plot_dist
 
 
 class QuantileOffTopicMixin(BaseOffTopicMixin):
