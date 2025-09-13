@@ -18,11 +18,7 @@ from ..core.src.augmentations.multi_crop import MultiCropAugmentation
 from ..core.src.pkg import Embedder, embed_dataset
 from ..core.src.trainers.dino_trainer import DINOTrainer
 from ..core.src.utils.logging import set_log_level
-from ..core.src.utils.utils import (
-    cleanup,
-    fix_random_seeds,
-    init_distributed_mode,
-)
+from ..core.src.utils.utils import cleanup, fix_random_seeds, init_distributed_mode
 from ..utils.utils import set_dataset_transformation
 
 DINO_STANDARD_HYPERPARAMETERS = {

@@ -26,7 +26,7 @@ class AutoCleaningMixin:
         cleaner_kwargs: dict = {},
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__()
         self.auto_cleaning = auto_cleaning
         self.off_topic_cut_off = off_topic_cut_off
         self.near_duplicate_cut_off = near_duplicate_cut_off

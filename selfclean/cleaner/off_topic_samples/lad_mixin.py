@@ -4,8 +4,8 @@ import numpy as np
 from scipy.cluster.hierarchy import single
 
 from ...cleaner.off_topic_samples.base_off_topic_mixin import BaseOffTopicMixin
-from ...scoring.lad_scoring import LAD
 from ...core.src.utils.plotting import plot_dist
+from ...scoring.lad_scoring import LAD
 
 
 class LADOffTopicMixin(BaseOffTopicMixin):

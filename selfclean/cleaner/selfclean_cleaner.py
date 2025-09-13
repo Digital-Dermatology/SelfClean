@@ -13,15 +13,28 @@ from tqdm.auto import tqdm
 from ..cleaner.auto_cleaning_mixin import AutoCleaningMixin
 from ..cleaner.base_cleaner import BaseCleaner
 from ..cleaner.issue_manager import IssueManager, IssueTypes
+from ..cleaner.label_errors.confident_learning_mixin import (
+    ConfidentLearningLabelErrorMixin,
+)
 from ..cleaner.label_errors.intra_extra_distance_mixin import (
     IntraExtraDistanceLabelErrorMixin,
 )
+from ..cleaner.near_duplicates.audio_hash_mixin import AudioHashNearDuplicateMixin
+from ..cleaner.near_duplicates.cleanlab_near_duplicate_mixin import (
+    CleanLabNearDuplicateMixin,
+)
+from ..cleaner.near_duplicates.dejavu_mixin import DejavuNearDuplicateMixin
 from ..cleaner.near_duplicates.embedding_distance_mixin import EmbeddingDistanceMixin
+from ..cleaner.off_topic_samples.cleanlab_mixin import CleanLabOffTopicMixin
+from ..cleaner.off_topic_samples.isolation_forest_mixin import (
+    IsolationForestOffTopicMixin,
+)
 from ..cleaner.off_topic_samples.lad_mixin import LADOffTopicMixin
-from ..distances import *  # noqa: F401, F403
-from ..distances.projective_distance import *  # noqa: F401, F403
+from ..cleaner.off_topic_samples.quantile_off_topic_mixin import QuantileOffTopicMixin
 from ..core.src.utils.logging import set_log_level
 from ..core.src.utils.utils import fix_random_seeds
+from ..distances import *  # noqa: F401, F403
+from ..distances.projective_distance import *  # noqa: F401, F403
 from ..utils.plotting import plot_inspection_result
 from ..utils.utils import triu_indices_memmap
 
@@ -30,6 +43,8 @@ class SelfCleanCleaner(
     BaseCleaner,
     LADOffTopicMixin,
     EmbeddingDistanceMixin,
+    CleanLabNearDuplicateMixin,
+    DejavuNearDuplicateMixin,
     IntraExtraDistanceLabelErrorMixin,
     AutoCleaningMixin,
 ):
@@ -53,6 +68,13 @@ class SelfCleanCleaner(
         random_seed: int = 42,
         # logging
         log_level: str = "INFO",
+        # baseline methods
+        near_duplicate_method: str = "embedding_distance",
+        near_duplicate_params: Optional[dict] = None,
+        off_topic_method: str = "lad",
+        off_topic_params: Optional[dict] = None,
+        label_error_method: str = "intra_extra_distance",
+        label_error_params: Optional[dict] = None,
         **kwargs,
     ):
         self.log_level = log_level
@@ -83,7 +105,154 @@ class SelfCleanCleaner(
         self.plot_top_N = plot_top_N
         self.figsize = figsize
         self.is_fitted = False
+
+        # Store baseline method configuration
+        self.near_duplicate_method = near_duplicate_method
+        self.near_duplicate_params = near_duplicate_params or {}
+        self.off_topic_method = off_topic_method
+        self.off_topic_params = off_topic_params or {}
+        self.label_error_method = label_error_method
+        self.label_error_params = label_error_params or {}
+
+        # Set up method routing for near duplicate detection
+        self._setup_method_routing()
+
         super().__init__(**kwargs)
+
+    def _setup_method_routing(self):
+        """Set up dynamic method routing for baseline methods."""
+        # Create method routing for near duplicate detection
+        if self.near_duplicate_method == "embedding_distance":
+            self.get_near_duplicate_ranking = (
+                EmbeddingDistanceMixin.get_near_duplicate_ranking.__get__(self)
+            )
+            logger.info(
+                f"Near-duplicate method: embedding_distance params={self.near_duplicate_params}"
+            )
+        elif self.near_duplicate_method == "cleanlab":
+            # Create instance with parameters and bind method
+            self._cleanlab_nd_instance = CleanLabNearDuplicateMixin(
+                **self.near_duplicate_params
+            )
+            self.get_near_duplicate_ranking = self._create_bound_method(
+                self._cleanlab_nd_instance, "get_near_duplicate_ranking"
+            )
+            logger.info(
+                f"Near-duplicate method: cleanlab params={self.near_duplicate_params}"
+            )
+        elif self.near_duplicate_method == "dejavu":
+            # Create instance with parameters and bind method
+            self._dejavu_instance = DejavuNearDuplicateMixin(
+                **self.near_duplicate_params
+            )
+            self.get_near_duplicate_ranking = self._create_bound_method(
+                self._dejavu_instance, "get_near_duplicate_ranking"
+            )
+            logger.info(
+                f"Near-duplicate method: dejavu params={self.near_duplicate_params}"
+            )
+        elif self.near_duplicate_method == "audio_hash":
+            # Create instance with parameters and bind method
+            self._audio_hash_instance = AudioHashNearDuplicateMixin(
+                **self.near_duplicate_params
+            )
+            self.get_near_duplicate_ranking = self._create_bound_method(
+                self._audio_hash_instance, "get_near_duplicate_ranking"
+            )
+            logger.info(
+                f"Near-duplicate method: audio_hash params={self.near_duplicate_params}"
+            )
+        else:
+            raise ValueError(
+                f"Unknown near_duplicate_method: {self.near_duplicate_method}"
+            )
+
+        # Create method routing for off-topic detection
+        if self.off_topic_method == "lad":
+            self._lad_instance = LADOffTopicMixin(**self.off_topic_params)
+            self.get_off_topic_ranking = self._create_bound_method(
+                self._lad_instance, "get_off_topic_ranking"
+            )
+            logger.info(f"Off-topic method: lad params={self.off_topic_params}")
+        elif self.off_topic_method == "quantile":
+            self._quantile_instance = QuantileOffTopicMixin(**self.off_topic_params)
+            self.get_off_topic_ranking = self._create_bound_method(
+                self._quantile_instance, "get_off_topic_ranking"
+            )
+            logger.info(f"Off-topic method: quantile params={self.off_topic_params}")
+        elif self.off_topic_method == "isolation_forest":
+            self._isolation_forest_instance = IsolationForestOffTopicMixin(
+                **self.off_topic_params
+            )
+            self.get_off_topic_ranking = self._create_bound_method(
+                self._isolation_forest_instance, "get_off_topic_ranking"
+            )
+            logger.info(
+                f"Off-topic method: isolation_forest params={self.off_topic_params}"
+            )
+        elif self.off_topic_method == "cleanlab":
+            self._cleanlab_ot_instance = CleanLabOffTopicMixin(**self.off_topic_params)
+            self.get_off_topic_ranking = self._create_bound_method(
+                self._cleanlab_ot_instance, "get_off_topic_ranking"
+            )
+            logger.info(f"Off-topic method: cleanlab params={self.off_topic_params}")
+        else:
+            raise ValueError(f"Unknown off_topic_method: {self.off_topic_method}")
+
+        # Create method routing for label error detection
+        if self.label_error_method == "intra_extra_distance":
+            self._intra_extra_instance = IntraExtraDistanceLabelErrorMixin(
+                **self.label_error_params
+            )
+            self.get_label_error_ranking = self._create_bound_method(
+                self._intra_extra_instance, "get_label_error_ranking"
+            )
+            logger.info(
+                f"Label-error method: intra_extra_distance params={self.label_error_params}"
+            )
+        elif self.label_error_method == "cleanlab":
+            self._confident_learning_instance = ConfidentLearningLabelErrorMixin(
+                **self.label_error_params
+            )
+            self.get_label_error_ranking = self._create_bound_method(
+                self._confident_learning_instance, "get_label_error_ranking"
+            )
+            logger.info(
+                f"Label-error method: cleanlab (confident learning) params={self.label_error_params}"
+            )
+        else:
+            raise ValueError(f"Unknown label_error_method: {self.label_error_method}")
+
+    def _create_bound_method(self, instance, method_name):
+        """Create a bound method that transfers data from cleaner to instance before calling."""
+
+        def bound_method(*args, **kwargs):
+            # Transfer necessary attributes from cleaner to instance
+            if hasattr(self, "emb_space"):
+                instance.emb_space = self.emb_space
+            if hasattr(self, "labels"):
+                instance.labels = self.labels
+            if hasattr(self, "paths"):
+                instance.paths = self.paths
+            if hasattr(self, "N"):
+                instance.N = self.N
+            if hasattr(self, "D"):
+                instance.D = self.D
+            if hasattr(self, "p_distances"):
+                instance.p_distances = self.p_distances
+            if hasattr(self, "distance_matrix"):
+                instance.distance_matrix = self.distance_matrix
+            if hasattr(self, "plot_distribution"):
+                instance.plot_distribution = self.plot_distribution
+            if hasattr(self, "memmap"):
+                instance.memmap = self.memmap
+            if hasattr(self, "memmap_path"):
+                instance.memmap_path = self.memmap_path
+
+            # Call the method on the instance
+            return getattr(instance, method_name)(*args, **kwargs)
+
+        return bound_method
 
     def fit(
         self,
