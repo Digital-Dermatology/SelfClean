@@ -123,8 +123,9 @@ class DejavuNearDuplicateMixin(BaseNearDuplicateMixin):
                     song_name = result["song_name"]
                     confidence = result.get("fingerprinted_confidence", 0.0)
 
-                    # Avoid self-matches
-                    if seg_name != song_name:
+                    # Store all matches (including self-matches) with confidence > 0
+                    # The original implementation stores all results and lets the evaluation handle filtering
+                    if confidence > 0:
                         results_list.append([seg_name, song_name, confidence])
 
         # Clean up temporary files
@@ -142,17 +143,12 @@ class DejavuNearDuplicateMixin(BaseNearDuplicateMixin):
         processed_results = self._prepare_dejavu_results(df_results)
 
         if processed_results.empty:
-            return np.array([]), np.array([]).reshape(0, 2)
-
-        # Extract scores and indices (following master student's format)
-        scores = processed_results["scores"].values
-        # Convert nearDup1/nearDup2 to integers for indices
-        try:
-            indices = processed_results[["nearDup1", "nearDup2"]].astype(int).values
-        except (ValueError, KeyError) as e:
             raise RuntimeError(
-                f"Dejavu: Could not convert indices to integers: {e}"
-            ) from e
+                "Dejavu: No valid matches remain after processing results."
+            )
+
+        # Convert segment-based matches to sample-based ranking
+        scores, indices = self._convert_to_sample_ranking(processed_results)
 
         if self.plot_distribution and len(scores) > 0:
             plot_dist(
@@ -161,6 +157,75 @@ class DejavuNearDuplicateMixin(BaseNearDuplicateMixin):
             )
 
         return scores, indices
+    
+    def _convert_to_sample_ranking(self, df_results):
+        """Convert segment-based matches to sample-based ranking."""
+        from loguru import logger
+        
+        if df_results.empty:
+            raise RuntimeError("Dejavu: Empty results DataFrame provided for sample ranking")
+        
+        # Create mapping from filename to sample index
+        if not hasattr(self, 'paths') or self.paths is None:
+            raise RuntimeError("Dejavu: Audio file paths not available for sample mapping")
+        
+        logger.info(f"Dejavu: Converting {len(df_results)} segment matches to sample ranking")
+        
+        # Create filename to index mapping
+        filename_to_idx = {}
+        for idx, path in enumerate(self.paths):
+            filename = Path(path).stem
+            filename_to_idx[filename] = idx
+        
+        logger.info(f"Dejavu: Created mapping for {len(filename_to_idx)} audio files")
+        
+        # Convert segment matches to sample matches
+        sample_matches = []
+        unmapped_files = set()
+        
+        for _, row in df_results.iterrows():
+            file1 = row["nearDup1_id"] 
+            file2 = row["nearDup2_id"]
+            score = row["scores"]
+            
+            # Map filenames to sample indices
+            if file1 not in filename_to_idx:
+                unmapped_files.add(file1)
+            if file2 not in filename_to_idx:
+                unmapped_files.add(file2)
+                
+            if file1 in filename_to_idx and file2 in filename_to_idx:
+                idx1 = filename_to_idx[file1]
+                idx2 = filename_to_idx[file2]
+                
+                # Only keep inter-sample matches (different audio files)
+                if idx1 != idx2:
+                    sample_matches.append([idx1, idx2, score])
+        
+        if unmapped_files:
+            logger.warning(f"Dejavu: Could not map {len(unmapped_files)} filenames to sample indices: {list(unmapped_files)[:10]}...")
+        
+        if not sample_matches:
+            raise RuntimeError(
+                f"Dejavu: No valid inter-sample matches found from {len(df_results)} segment matches. "
+                f"Unmapped files: {len(unmapped_files)}"
+            )
+        
+        logger.info(f"Dejavu: Found {len(sample_matches)} valid inter-sample matches")
+        
+        # Convert to arrays and sort by score (lower = more similar)
+        sample_matches = np.array(sample_matches)
+        scores = sample_matches[:, 2]
+        indices = sample_matches[:, :2].astype(int)
+        
+        # Sort by scores (ascending, so most similar pairs come first)
+        sort_order = np.argsort(scores)
+        sorted_scores = scores[sort_order]
+        sorted_indices = indices[sort_order]
+        
+        logger.info(f"Dejavu: Returning {len(sorted_scores)} ranked sample pairs (score range: {sorted_scores.min():.3f} - {sorted_scores.max():.3f})")
+        
+        return sorted_scores, sorted_indices
 
     def _create_audio_segments(self) -> list[Path]:
         """
@@ -312,16 +377,60 @@ class DejavuNearDuplicateMixin(BaseNearDuplicateMixin):
         conn = psycopg2.connect(**self.database_config["database"])
         cur = conn.cursor()
         try:
-            cur.execute("TRUNCATE fingerprints, songs;")
+            # First, try to create tables if they don't exist
+            self._create_database_tables(cur)
+            # Then truncate them for a clean start
+            cur.execute("TRUNCATE fingerprints, songs CASCADE;")
         except psycopg2.errors.ProgrammingError as e:
-            # Tables might not exist yet; raise explicit error to avoid silent fallback
+            # If tables still can't be created/accessed, raise error
             raise RuntimeError(
-                "Dejavu: Database schema is missing required tables (fingerprints, songs)."
+                "Dejavu: Failed to initialize or clean database tables (fingerprints, songs)."
             ) from e
         finally:
             conn.commit()
             cur.close()
             conn.close()
+    
+    def _create_database_tables(self, cursor):
+        """Create Dejavu database tables if they don't exist."""
+        # Create songs table
+        create_songs_sql = '''
+        CREATE TABLE IF NOT EXISTS "songs" (
+            "song_id" SERIAL,
+            "song_name" VARCHAR(250) NOT NULL,
+            "fingerprinted" SMALLINT DEFAULT 0,
+            "file_sha1" BYTEA,
+            "total_hashes" INT NOT NULL DEFAULT 0,
+            "date_created" TIMESTAMP NOT NULL DEFAULT now(),
+            "date_modified" TIMESTAMP NOT NULL DEFAULT now(),
+            CONSTRAINT "pk_songs_song_id" PRIMARY KEY ("song_id"),
+            CONSTRAINT "uq_songs_song_id" UNIQUE ("song_id")
+        );
+        '''
+        
+        # Create fingerprints table
+        create_fingerprints_sql = '''
+        CREATE TABLE IF NOT EXISTS "fingerprints" (
+            "hash" BYTEA NOT NULL,
+            "song_id" INT NOT NULL,
+            "offset" INT NOT NULL,
+            "date_created" TIMESTAMP NOT NULL DEFAULT now(),
+            "date_modified" TIMESTAMP NOT NULL DEFAULT now(),
+            CONSTRAINT "uq_fingerprints" UNIQUE ("song_id", "offset", "hash"),
+            CONSTRAINT "fk_fingerprints_song_id" FOREIGN KEY ("song_id")
+                REFERENCES "songs"("song_id") ON DELETE CASCADE
+        );
+        '''
+        
+        # Create index for fingerprints table
+        create_index_sql = '''
+        CREATE INDEX IF NOT EXISTS "ix_fingerprints_hash" ON "fingerprints"
+        USING hash ("hash");
+        '''
+        
+        cursor.execute(create_songs_sql)
+        cursor.execute(create_fingerprints_sql)
+        cursor.execute(create_index_sql)
 
     def _cleanup_segments(self):
         """Clean up temporary audio segments."""
