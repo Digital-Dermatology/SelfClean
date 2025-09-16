@@ -9,10 +9,7 @@ from ...core.src.utils.plotting import plot_dist
 
 
 class CleanLabOffTopicMixin(BaseOffTopicMixin):
-    """
-    Supervised off-topic ranking using cross-validated probabilities.
-    Returns a continuous score for every sample (no thresholding).
-    """
+    """Supervised off-topic ranking using cross-validated probabilities."""
 
     def __init__(
         self,
@@ -61,9 +58,7 @@ class CleanLabOffTopicMixin(BaseOffTopicMixin):
             else:
                 numeric_labels = self.labels
         else:
-            # If no labels available, we can't use CleanLab's supervised approach
-            # Fall back to unsupervised outlier detection based on embedding distances
-            return self._unsupervised_outlier_detection()
+            raise ValueError("No labels available.")
 
         # Train LogisticRegression model with cross-validation
         model = LogisticRegression(
@@ -104,24 +99,3 @@ class CleanLabOffTopicMixin(BaseOffTopicMixin):
             )
 
         return sorted_scores, sorted_indices
-
-    def _unsupervised_outlier_detection(self) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Fallback unsupervised outlier detection when labels are not available.
-        Uses distance-based approach similar to quantile method.
-        """
-        # Calculate mean distance to all other samples for each sample
-        distances = np.mean(self.distance_matrix, axis=1)
-
-        # Create (score, index) pairs and sort by distance (descending)
-        off_topic_samples = [(distances[i], i) for i in range(len(distances))]
-        off_topic_samples = sorted(
-            off_topic_samples,
-            key=lambda tup: tup[0],
-            reverse=True,
-        )
-
-        off_topic_scores = np.asarray([x[0] for x in off_topic_samples])
-        off_topic_indices = np.asarray([x[1] for x in off_topic_samples])
-
-        return off_topic_scores, off_topic_indices

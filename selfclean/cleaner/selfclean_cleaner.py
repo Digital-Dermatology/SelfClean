@@ -20,9 +20,6 @@ from ..cleaner.label_errors.intra_extra_distance_mixin import (
     IntraExtraDistanceLabelErrorMixin,
 )
 from ..cleaner.near_duplicates.audio_hash_mixin import AudioHashNearDuplicateMixin
-from ..cleaner.near_duplicates.cleanlab_near_duplicate_mixin import (
-    CleanLabNearDuplicateMixin,
-)
 from ..cleaner.near_duplicates.dejavu_mixin import DejavuNearDuplicateMixin
 from ..cleaner.near_duplicates.embedding_distance_mixin import EmbeddingDistanceMixin
 from ..cleaner.off_topic_samples.cleanlab_mixin import CleanLabOffTopicMixin
@@ -43,7 +40,6 @@ class SelfCleanCleaner(
     BaseCleaner,
     LADOffTopicMixin,
     EmbeddingDistanceMixin,
-    CleanLabNearDuplicateMixin,
     DejavuNearDuplicateMixin,
     IntraExtraDistanceLabelErrorMixin,
     AutoCleaningMixin,
@@ -128,17 +124,6 @@ class SelfCleanCleaner(
             )
             logger.info(
                 f"Near-duplicate method: embedding_distance params={self.near_duplicate_params}"
-            )
-        elif self.near_duplicate_method == "cleanlab":
-            # Create instance with parameters and bind method
-            self._cleanlab_nd_instance = CleanLabNearDuplicateMixin(
-                **self.near_duplicate_params
-            )
-            self.get_near_duplicate_ranking = self._create_bound_method(
-                self._cleanlab_nd_instance, "get_near_duplicate_ranking"
-            )
-            logger.info(
-                f"Near-duplicate method: cleanlab params={self.near_duplicate_params}"
             )
         elif self.near_duplicate_method == "dejavu":
             # Create instance with parameters and bind method

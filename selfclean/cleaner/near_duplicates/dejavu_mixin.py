@@ -1,4 +1,3 @@
-import os
 import tempfile
 from pathlib import Path
 from typing import Tuple
@@ -45,7 +44,6 @@ class DejavuNearDuplicateMixin(BaseNearDuplicateMixin):
         self.spec_sr = spec_sr
         self.segment_strategy = segment_strategy
 
-        # Default database configuration (aligned with master student implementation)
         if database_config is None:
             self.database_config = {
                 "database": {
@@ -78,7 +76,6 @@ class DejavuNearDuplicateMixin(BaseNearDuplicateMixin):
             # Import Dejavu dependencies (using PyDejavu for Python 3 compatibility)
             from dejavu import Dejavu
             from dejavu.logic.recognizer.file_recognizer import FileRecognizer
-            import psycopg2
         except ImportError as e:
             raise ImportError(
                 f"Dejavu dependencies not available: {e}. "
@@ -157,74 +154,80 @@ class DejavuNearDuplicateMixin(BaseNearDuplicateMixin):
             )
 
         return scores, indices
-    
+
     def _convert_to_sample_ranking(self, df_results):
-        """Convert segment-based matches to sample-based ranking."""
+        """Convert segment-based matches to sample-based ranking with full pairwise ranking."""
         from loguru import logger
-        
-        if df_results.empty:
-            raise RuntimeError("Dejavu: Empty results DataFrame provided for sample ranking")
-        
-        # Create mapping from filename to sample index
-        if not hasattr(self, 'paths') or self.paths is None:
-            raise RuntimeError("Dejavu: Audio file paths not available for sample mapping")
-        
-        logger.info(f"Dejavu: Converting {len(df_results)} segment matches to sample ranking")
-        
+
+        if not hasattr(self, "paths") or self.paths is None:
+            raise RuntimeError(
+                "Dejavu: Audio file paths not available for sample mapping"
+            )
+
+        n_samples = len(self.paths)
+        logger.info(
+            f"Dejavu: Converting {len(df_results)} segment matches to full sample ranking for {n_samples} samples"
+        )
+
         # Create filename to index mapping
         filename_to_idx = {}
         for idx, path in enumerate(self.paths):
             filename = Path(path).stem
             filename_to_idx[filename] = idx
-        
-        logger.info(f"Dejavu: Created mapping for {len(filename_to_idx)} audio files")
-        
-        # Convert segment matches to sample matches
-        sample_matches = []
-        unmapped_files = set()
-        
+
+        # Create confidence matrix for all pairs
+        confidence_matrix = np.zeros((n_samples, n_samples))
+        match_count_matrix = np.zeros((n_samples, n_samples), dtype=int)
+
+        # Process actual matches from Dejavu
         for _, row in df_results.iterrows():
-            file1 = row["nearDup1_id"] 
+            file1 = row["nearDup1_id"]
             file2 = row["nearDup2_id"]
             score = row["scores"]
-            
-            # Map filenames to sample indices
-            if file1 not in filename_to_idx:
-                unmapped_files.add(file1)
-            if file2 not in filename_to_idx:
-                unmapped_files.add(file2)
-                
+
             if file1 in filename_to_idx and file2 in filename_to_idx:
                 idx1 = filename_to_idx[file1]
                 idx2 = filename_to_idx[file2]
-                
-                # Only keep inter-sample matches (different audio files)
-                if idx1 != idx2:
-                    sample_matches.append([idx1, idx2, score])
-        
-        if unmapped_files:
-            logger.warning(f"Dejavu: Could not map {len(unmapped_files)} filenames to sample indices: {list(unmapped_files)[:10]}...")
-        
-        if not sample_matches:
-            raise RuntimeError(
-                f"Dejavu: No valid inter-sample matches found from {len(df_results)} segment matches. "
-                f"Unmapped files: {len(unmapped_files)}"
-            )
-        
-        logger.info(f"Dejavu: Found {len(sample_matches)} valid inter-sample matches")
-        
-        # Convert to arrays and sort by score (lower = more similar)
-        sample_matches = np.array(sample_matches)
-        scores = sample_matches[:, 2]
-        indices = sample_matches[:, :2].astype(int)
-        
-        # Sort by scores (ascending, so most similar pairs come first)
-        sort_order = np.argsort(scores)
-        sorted_scores = scores[sort_order]
+
+                # Update confidence matrix (symmetric)
+                confidence_matrix[idx1, idx2] = max(
+                    confidence_matrix[idx1, idx2], score
+                )
+                confidence_matrix[idx2, idx1] = max(
+                    confidence_matrix[idx2, idx1], score
+                )
+
+                # Track number of segment matches
+                match_count_matrix[idx1, idx2] += 1
+                match_count_matrix[idx2, idx1] += 1
+
+        # Create full pairwise ranking
+        # Get upper triangle indices (avoid duplicates and self-matches)
+        triu_indices = np.triu_indices(n_samples, k=1)
+
+        # Extract confidence scores for all pairs
+        confidence_scores = confidence_matrix[triu_indices]
+
+        # Convert confidence to distance (1 - confidence)
+        # Pairs with no matches get maximum distance (1.0)
+        distance_scores = 1.0 - confidence_scores
+
+        # Create indices array
+        indices = np.column_stack([triu_indices[0], triu_indices[1]])
+
+        # Sort by distance (ascending = most similar first)
+        sort_order = np.argsort(distance_scores)
+        sorted_scores = distance_scores[sort_order]
         sorted_indices = indices[sort_order]
-        
-        logger.info(f"Dejavu: Returning {len(sorted_scores)} ranked sample pairs (score range: {sorted_scores.min():.3f} - {sorted_scores.max():.3f})")
-        
+
+        logger.info(f"Dejavu: Returning full ranking with {len(sorted_scores)} pairs")
+        logger.info(
+            f"Dejavu: Score range: {sorted_scores.min():.3f} - {sorted_scores.max():.3f}"
+        )
+        logger.info(
+            f"Dejavu: Found confident matches for {np.sum(confidence_scores > 0)} pairs out of {len(sorted_scores)} total pairs"
+        )
+
         return sorted_scores, sorted_indices
 
     def _create_audio_segments(self) -> list[Path]:
@@ -263,9 +266,7 @@ class DejavuNearDuplicateMixin(BaseNearDuplicateMixin):
         return segment_paths
 
     def _segment_audio(self, audio, base_name):
-        """
-        Segment audio based on the specified strategy.
-        """
+        """Segment audio based on the specified strategy."""
         audio_samples = audio.shape[-1]
 
         if self.segment_strategy == "single":
@@ -276,19 +277,43 @@ class DejavuNearDuplicateMixin(BaseNearDuplicateMixin):
             else:
                 return [audio]
 
+        elif self.segment_strategy == "multiple_random":
+            # Multiple random segments for better coverage
+            if audio_samples >= self.audio_length:
+                num_segments = min(
+                    3, audio_samples // (self.audio_length // 2)
+                )  # Allow overlap
+                segments = []
+                for _ in range(num_segments):
+                    start_idx = np.random.randint(
+                        0, audio_samples - self.audio_length + 1
+                    )
+                    segments.append(
+                        audio[..., start_idx : start_idx + self.audio_length]
+                    )
+                return segments
+            else:
+                return [audio]
+
         elif self.segment_strategy == "consecutive":
-            # 1-3 consecutive segments
-            num_segments = min(3, audio_samples // self.audio_length)
+            # 1-5 consecutive segments (increased from 1-3 for better coverage)
+            num_segments = min(5, audio_samples // self.audio_length)
             if num_segments >= 1:
-                start_idx = np.random.randint(
-                    0, audio_samples - (num_segments * self.audio_length) + 1
-                )
+                # Try multiple starting positions to increase match probability
+                max_start = max(0, audio_samples - (num_segments * self.audio_length))
+                if max_start > 0:
+                    start_idx = np.random.randint(0, max_start + 1)
+                else:
+                    start_idx = 0
                 segments = []
                 for i in range(num_segments):
                     seg_start = start_idx + (i * self.audio_length)
-                    seg_end = seg_start + self.audio_length
-                    segments.append(audio[..., seg_start:seg_end])
-                return segments
+                    seg_end = min(seg_start + self.audio_length, audio_samples)
+                    if (
+                        seg_end - seg_start >= self.audio_length // 2
+                    ):  # Accept segments at least half length
+                        segments.append(audio[..., seg_start:seg_end])
+                return segments if segments else [audio]
             else:
                 return [audio]
 
@@ -306,18 +331,15 @@ class DejavuNearDuplicateMixin(BaseNearDuplicateMixin):
             raise ValueError(f"Unknown segment strategy: {self.segment_strategy}")
 
     def _prepare_dejavu_results(self, df_results):
-        """
-        Process Dejavu results into standardized format.
-        Follow master student's pattern from prepare_near_dups_from_dejavu (lines 524-568).
-        """
+        """Process Dejavu results into standardized format."""
         if df_results.empty:
             return df_results
 
-        # Convert bytes to strings if needed (master student line 534)
+        # Convert bytes to strings if needed
         if df_results["nearDup2_id"].dtype == "object":
             df_results["nearDup2_id"] = df_results["nearDup2_id"].astype(str)
 
-        # Remove all reverse "duplicates" (master student lines 547-551)
+        # Remove all reverse "duplicates"
         # Sort each row to ensure consistent ordering (nearDup1 < nearDup2)
         for idx, row in df_results.iterrows():
             if row["nearDup1_id"] > row["nearDup2_id"]:
@@ -331,16 +353,16 @@ class DejavuNearDuplicateMixin(BaseNearDuplicateMixin):
         df_results = df_results.drop_duplicates(subset=["nearDup1_id", "nearDup2_id"])
         df_results = df_results[["nearDup1_id", "nearDup2_id", "scores"]].copy()
 
-        # Remove all rows where nearDup1_id is the same as nearDup2_id (master student line 555)
+        # Remove all rows where nearDup1_id is the same as nearDup2_id
         df_results = df_results.query("nearDup1_id != nearDup2_id").copy()
 
-        # Convert scores: 1 - scores for SelfClean format (master student line 559)
+        # Convert scores: 1 - scores for SelfClean format
         df_results["scores"] = 1 - df_results["scores"]
 
-        # Sort by lowest score (master student line 561)
+        # Sort by lowest score
         df_results = df_results.sort_values("scores").reset_index(drop=True)
 
-        # Extract segment number from id into separate column (master student lines 563-566)
+        # Extract segment number from id into separate column
         # Handle the case where segment names follow pattern: "filename_segmentnum"
         def extract_segment_info(id_str):
             """Extract base filename and segment number from ID."""
@@ -390,11 +412,11 @@ class DejavuNearDuplicateMixin(BaseNearDuplicateMixin):
             conn.commit()
             cur.close()
             conn.close()
-    
+
     def _create_database_tables(self, cursor):
         """Create Dejavu database tables if they don't exist."""
         # Create songs table
-        create_songs_sql = '''
+        create_songs_sql = """
         CREATE TABLE IF NOT EXISTS "songs" (
             "song_id" SERIAL,
             "song_name" VARCHAR(250) NOT NULL,
@@ -406,10 +428,10 @@ class DejavuNearDuplicateMixin(BaseNearDuplicateMixin):
             CONSTRAINT "pk_songs_song_id" PRIMARY KEY ("song_id"),
             CONSTRAINT "uq_songs_song_id" UNIQUE ("song_id")
         );
-        '''
-        
+        """
+
         # Create fingerprints table
-        create_fingerprints_sql = '''
+        create_fingerprints_sql = """
         CREATE TABLE IF NOT EXISTS "fingerprints" (
             "hash" BYTEA NOT NULL,
             "song_id" INT NOT NULL,
@@ -420,14 +442,14 @@ class DejavuNearDuplicateMixin(BaseNearDuplicateMixin):
             CONSTRAINT "fk_fingerprints_song_id" FOREIGN KEY ("song_id")
                 REFERENCES "songs"("song_id") ON DELETE CASCADE
         );
-        '''
-        
+        """
+
         # Create index for fingerprints table
-        create_index_sql = '''
+        create_index_sql = """
         CREATE INDEX IF NOT EXISTS "ix_fingerprints_hash" ON "fingerprints"
         USING hash ("hash");
-        '''
-        
+        """
+
         cursor.execute(create_songs_sql)
         cursor.execute(create_fingerprints_sql)
         cursor.execute(create_index_sql)

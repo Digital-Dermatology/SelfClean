@@ -3,7 +3,6 @@ from typing import Tuple
 
 import librosa
 import numpy as np
-import torchaudio
 
 from ...cleaner.near_duplicates.base_near_duplicate_mixin import BaseNearDuplicateMixin
 from ...core.src.utils.plotting import plot_dist
@@ -234,12 +233,8 @@ class AudioHashNearDuplicateMixin(BaseNearDuplicateMixin):
 
         return cosine_similarity(hashes)
 
-    # Thresholded pair extraction removed; full ranking is returned directly above.
-
     def _embedding_similarity_fallback(self) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Fallback to embedding-based similarity when audio paths are not available.
-        """
+        """Fallback to embedding-based similarity when audio paths are not available."""
         if not hasattr(self, "emb_space") or self.emb_space is None:
             return np.array([]), np.array([]).reshape(0, 2)
 
