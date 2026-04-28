@@ -21,6 +21,14 @@ class EmbeddingDistanceMixin(BaseNearDuplicateMixin):
         self.tree_size = tree_size
 
     def get_near_duplicate_ranking(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Dispatches to the exact or approximate ranking based on
+        `self.approximate_nn`. Both branches return the same `(scores, indices)`
+        shape: 1D scores ascending + (M, 2) int32 pair indices."""
+        if getattr(self, "approximate_nn", False):
+            return self._get_approx_near_duplicate_ranking()
+        return self._get_exact_near_duplicate_ranking()
+
+    def _get_exact_near_duplicate_ranking(self) -> Tuple[np.ndarray, np.ndarray]:
         if self.memmap:
             score_file = self.memmap_path / "near_duplicate_scores.dat"
             # make sure the files do not exist already
@@ -89,39 +97,66 @@ class EmbeddingDistanceMixin(BaseNearDuplicateMixin):
             )
         return scores_near_dup, indices_near_dup
 
-    def get_approx_near_duplicate_ranking(self):
-        import copy
+    def _get_approx_near_duplicate_ranking(self) -> Tuple[np.ndarray, np.ndarray]:
+        """KNN-based near-duplicate ranking that consumes the cached graph
+        populated by `SelfCleanCleaner._build_knn_index`.
 
-        import pandas as pd
-        from annoy import AnnoyIndex
-
-        # faiss expects all arrays to be `float32`
-        _emb_space = copy.deepcopy(self.emb_space)
-        _emb_space = _emb_space.astype("float32")
-        # create a `annoy` index with cosine distance (angular)
-        annoy_index = AnnoyIndex(len(_emb_space[0]), "angular")
-        for idx, x in enumerate(_emb_space):
-            annoy_index.add_item(idx, x)
-        annoy_index.build(self.tree_size, n_jobs=-1)
-        # search the nearest neighbors
-        nn_results = [
-            annoy_index.get_nns_by_item(
-                i,
-                n=self.approx_no_neighbors,
-                include_distances=True,
-                search_k=-1,
+        Returns the same `(scores, indices)` shape the exact path returns —
+        only the count differs. Where the exact path produces every pair
+        (`condensed_size`), the approximate path produces at most `N * K`
+        unique pairs derived from the K-nearest-neighbour graph, with `K =
+        self.approx_no_neighbors`. For each (i, j) emitted, `i < j`. Scores
+        are in [0, 1] and sorted ascending (most-duplicate first).
+        """
+        if not hasattr(self, "knn_indices"):
+            raise RuntimeError(
+                "Approximate near-duplicate ranking requires `_build_knn_index` "
+                "to have been called by `fit`. Pass `approximate_nn=True` to "
+                "the cleaner constructor and re-fit."
             )
-            for i in range(len(self.emb_space))
-        ]
-        indices = [x[0] for x in nn_results]
-        distances = [x[1] for x in nn_results]
 
-        # create the return dataframe
-        df = pd.DataFrame()
-        df[[f"nn_idx_{x}" for x in range(self.approx_no_neighbors)]] = indices
-        df[[f"nn_dist_{x}" for x in range(self.approx_no_neighbors)]] = distances
-        df = df.reindex(sorted(df.columns, key=lambda x: int(x.split("_")[-1])), axis=1)
-        df = df.drop(columns=["nn_dist_0"])
-        df = df.rename(columns={"nn_idx_0": "seed_idx"})
-        del _emb_space, annoy_index
-        return df
+        K = self.knn_indices.shape[1]
+        rows = np.repeat(np.arange(self.N, dtype=np.int64), K)
+        cols = self.knn_indices.reshape(-1).astype(np.int64)
+        dists = self.knn_distances.reshape(-1).astype(self.precision_type_distance)
+
+        # Order each pair canonically as (a < b)
+        a = np.minimum(rows, cols)
+        b = np.maximum(rows, cols)
+        valid = a != b
+        a, b, dists = a[valid], b[valid], dists[valid]
+
+        # Pack (a, b) -> single key for de-duplication
+        key = a * self.N + b
+        # Sort by key first, then by distance ascending within each key,
+        # so the first occurrence per key keeps the smallest distance
+        # (mutual neighbours can yield slightly different angular distances).
+        order = np.lexsort((dists, key))
+        key_sorted = key[order]
+        a_sorted = a[order]
+        b_sorted = b[order]
+        dists_sorted = dists[order]
+        keep = np.concatenate([[True], key_sorted[1:] != key_sorted[:-1]])
+        a_u = a_sorted[keep]
+        b_u = b_sorted[keep]
+        d_u = dists_sorted[keep]
+
+        # Final sort by distance ascending
+        final_order = np.argsort(d_u, kind="stable")
+        indices_near_dup = np.column_stack(
+            [a_u[final_order], b_u[final_order]]
+        ).astype(np.int32)
+        scores_near_dup = d_u[final_order].astype(self.precision_type_distance)
+
+        if self.plot_distribution:
+            plot_dist(
+                scores=scores_near_dup,
+                title="Distribution of near-duplicates (approximate)",
+            )
+        return scores_near_dup, indices_near_dup
+
+    # Backwards-compatible alias for downstream callers that imported the
+    # public method by name. Returns the same `(scores, indices)` tuple as
+    # `get_near_duplicate_ranking()` when `approximate_nn=True`.
+    def get_approx_near_duplicate_ranking(self) -> Tuple[np.ndarray, np.ndarray]:
+        return self._get_approx_near_duplicate_ranking()

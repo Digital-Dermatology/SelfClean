@@ -15,7 +15,21 @@ class LADOffTopicMixin(BaseOffTopicMixin):
 
     def get_off_topic_ranking(self) -> Tuple[np.ndarray, np.ndarray]:
         # linkage_matrix: [idx1, idx2, dist, sample_count]
-        linkage_matrix = single(self.p_distances)
+        # Exact path: single-linkage dendrogram from the full condensed
+        # distance vector. Approximate path: same dendrogram structure but
+        # built from the MST of the cached KNN graph (built in
+        # `SelfCleanCleaner._build_knn_linkage`). LAD scoring is unchanged
+        # in both modes; only the source of the linkage matrix differs.
+        if getattr(self, "approximate_nn", False):
+            if not hasattr(self, "knn_linkage_matrix"):
+                raise RuntimeError(
+                    "Approximate off-topic ranking requires `_build_knn_index` "
+                    "to have been called by `fit`. Pass `approximate_nn=True` "
+                    "to the cleaner constructor and re-fit."
+                )
+            linkage_matrix = self.knn_linkage_matrix
+        else:
+            linkage_matrix = single(self.p_distances)
         lad = LAD()
         off_topic_samples = lad.calc_scores(
             linkage_matrix=linkage_matrix,
